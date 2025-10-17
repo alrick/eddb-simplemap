@@ -508,7 +508,7 @@ export function Map({ onPointCountChange }: MapProps) {
       </div>
 
       {showFilter && (
-        <div className="absolute top-16 right-4 w-96 bg-card border border-border rounded-lg shadow-xl z-[1001]" style={{ maxHeight: 'calc(100vh - 7rem)', overflow: 'auto' }}>
+        <div className="absolute top-16 right-4 w-96 bg-card border border-border rounded-lg shadow-xl z-[1001]" style={{ maxHeight: 'calc(100vh - 9rem)', overflow: 'auto' }}>
           <div className="flex items-center justify-between px-4 py-3 border-b border-border sticky top-0 bg-card z-10">
             <div className="flex items-center gap-2">
               <Funnel size={20} weight="fill" className="text-primary" />
