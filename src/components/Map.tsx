@@ -414,19 +414,43 @@ export function Map({ onPointCountChange }: MapProps) {
     })
   }
 
-  const handleSelectAll = () => {
+  const handleSelectAllMaterials = () => {
     setSelectedMaterials(new Set(materials))
+  }
+
+  const handleDeselectAllMaterials = () => {
+    setSelectedMaterials(new Set())
+  }
+
+  const handleSelectAllMorphologies = () => {
     setSelectedMorphologies(new Set(morphologies))
+  }
+
+  const handleDeselectAllMorphologies = () => {
+    setSelectedMorphologies(new Set())
+  }
+
+  const handleSelectAllGames = () => {
     setSelectedGames(new Set(games))
+  }
+
+  const handleDeselectAllGames = () => {
+    setSelectedGames(new Set())
+  }
+
+  const handleSelectAllConservationStates = () => {
     setSelectedConservationStates(new Set(conservationStates))
+  }
+
+  const handleDeselectAllConservationStates = () => {
+    setSelectedConservationStates(new Set())
+  }
+
+  const handleSelectAllTypologies = () => {
     setSelectedTypologies(new Set(typologies))
   }
 
-  const handleDeselectAll = () => {
-    setSelectedMaterials(new Set())
-    setSelectedMorphologies(new Set())
-    setSelectedGames(new Set())
-    setSelectedConservationStates(new Set())
+  const handleDeselectAllTypologies = () => {
     setSelectedTypologies(new Set())
   }
   
@@ -508,7 +532,7 @@ export function Map({ onPointCountChange }: MapProps) {
       </div>
 
       {showFilter && (
-        <div className="absolute top-16 right-4 w-96 bg-card border border-border rounded-lg shadow-xl z-[1001]" style={{ maxHeight: 'calc(100vh - 9rem)', overflow: 'auto' }}>
+        <div className="absolute top-16 right-4 w-96 bg-card border border-border rounded-lg shadow-xl z-[1001]" style={{ maxHeight: 'calc(100vh - 10rem)', overflow: 'auto' }}>
           <div className="flex items-center justify-between px-4 py-3 border-b border-border sticky top-0 bg-card z-10">
             <div className="flex items-center gap-2">
               <Funnel size={20} weight="fill" className="text-primary" />
@@ -523,28 +547,9 @@ export function Map({ onPointCountChange }: MapProps) {
               <X size={18} />
             </Button>
           </div>
-          
-          <div className="px-4 py-2 border-b border-border bg-muted flex gap-2 sticky top-[57px] z-10">
-            <Button
-              onClick={handleSelectAll}
-              variant="ghost"
-              size="sm"
-              className="h-7 text-xs"
-            >
-              Select All
-            </Button>
-            <Button
-              onClick={handleDeselectAll}
-              variant="ghost"
-              size="sm"
-              className="h-7 text-xs"
-            >
-              Deselect All
-            </Button>
-          </div>
 
           <Tabs defaultValue="material" className="w-full">
-            <div className="px-4 pt-3 pb-2 sticky top-[97px] bg-card z-10">
+            <div className="px-4 pt-3 pb-2 sticky top-[57px] bg-card z-10">
               <TabsList className="grid w-full grid-cols-5 h-auto">
                 <TabsTrigger value="material" className="text-[10px] px-1 py-1.5">Material</TabsTrigger>
                 <TabsTrigger value="morphology" className="text-[10px] px-1 py-1.5">Morph.</TabsTrigger>
@@ -555,10 +560,28 @@ export function Map({ onPointCountChange }: MapProps) {
             </div>
             
             <TabsContent value="material" className="mt-0">
-              <div className="px-4 py-2 border-b border-border bg-muted">
+              <div className="px-4 py-2 border-b border-border bg-muted flex items-center justify-between">
                 <p className="text-xs text-muted-foreground">
                   Selected: <span className="font-semibold text-foreground">{selectedMaterials.size}</span> of <span className="font-semibold text-foreground">{materials.length}</span>
                 </p>
+                <div className="flex gap-1">
+                  <Button
+                    onClick={handleSelectAllMaterials}
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 text-xs px-2"
+                  >
+                    All
+                  </Button>
+                  <Button
+                    onClick={handleDeselectAllMaterials}
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 text-xs px-2"
+                  >
+                    None
+                  </Button>
+                </div>
               </div>
               <div className="px-4 py-3 space-y-3">
                 {materials.map(material => (
@@ -583,10 +606,28 @@ export function Map({ onPointCountChange }: MapProps) {
             </TabsContent>
             
             <TabsContent value="morphology" className="mt-0">
-              <div className="px-4 py-2 border-b border-border bg-muted">
+              <div className="px-4 py-2 border-b border-border bg-muted flex items-center justify-between">
                 <p className="text-xs text-muted-foreground">
                   Selected: <span className="font-semibold text-foreground">{selectedMorphologies.size}</span> of <span className="font-semibold text-foreground">{morphologies.length}</span>
                 </p>
+                <div className="flex gap-1">
+                  <Button
+                    onClick={handleSelectAllMorphologies}
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 text-xs px-2"
+                  >
+                    All
+                  </Button>
+                  <Button
+                    onClick={handleDeselectAllMorphologies}
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 text-xs px-2"
+                  >
+                    None
+                  </Button>
+                </div>
               </div>
               <div className="px-4 py-3 space-y-3">
                 {morphologies.map(morphology => (
@@ -611,10 +652,28 @@ export function Map({ onPointCountChange }: MapProps) {
             </TabsContent>
             
             <TabsContent value="game" className="mt-0">
-              <div className="px-4 py-2 border-b border-border bg-muted">
+              <div className="px-4 py-2 border-b border-border bg-muted flex items-center justify-between">
                 <p className="text-xs text-muted-foreground">
                   Selected: <span className="font-semibold text-foreground">{selectedGames.size}</span> of <span className="font-semibold text-foreground">{games.length}</span>
                 </p>
+                <div className="flex gap-1">
+                  <Button
+                    onClick={handleSelectAllGames}
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 text-xs px-2"
+                  >
+                    All
+                  </Button>
+                  <Button
+                    onClick={handleDeselectAllGames}
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 text-xs px-2"
+                  >
+                    None
+                  </Button>
+                </div>
               </div>
               <div className="px-4 py-3 space-y-3">
                 {games.map(game => (
@@ -639,10 +698,28 @@ export function Map({ onPointCountChange }: MapProps) {
             </TabsContent>
             
             <TabsContent value="conservation" className="mt-0">
-              <div className="px-4 py-2 border-b border-border bg-muted">
+              <div className="px-4 py-2 border-b border-border bg-muted flex items-center justify-between">
                 <p className="text-xs text-muted-foreground">
                   Selected: <span className="font-semibold text-foreground">{selectedConservationStates.size}</span> of <span className="font-semibold text-foreground">{conservationStates.length}</span>
                 </p>
+                <div className="flex gap-1">
+                  <Button
+                    onClick={handleSelectAllConservationStates}
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 text-xs px-2"
+                  >
+                    All
+                  </Button>
+                  <Button
+                    onClick={handleDeselectAllConservationStates}
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 text-xs px-2"
+                  >
+                    None
+                  </Button>
+                </div>
               </div>
               <div className="px-4 py-3 space-y-3">
                 {conservationStates.map(state => (
@@ -667,10 +744,28 @@ export function Map({ onPointCountChange }: MapProps) {
             </TabsContent>
             
             <TabsContent value="typology" className="mt-0">
-              <div className="px-4 py-2 border-b border-border bg-muted">
+              <div className="px-4 py-2 border-b border-border bg-muted flex items-center justify-between">
                 <p className="text-xs text-muted-foreground">
                   Selected: <span className="font-semibold text-foreground">{selectedTypologies.size}</span> of <span className="font-semibold text-foreground">{typologies.length}</span>
                 </p>
+                <div className="flex gap-1">
+                  <Button
+                    onClick={handleSelectAllTypologies}
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 text-xs px-2"
+                  >
+                    All
+                  </Button>
+                  <Button
+                    onClick={handleDeselectAllTypologies}
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 text-xs px-2"
+                  >
+                    None
+                  </Button>
+                </div>
               </div>
               <div className="px-4 py-3 space-y-3">
                 {typologies.map(typology => (
