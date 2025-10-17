@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
 import 'leaflet.markercluster'
+import { Bug, X } from '@phosphor-icons/react'
+import { Button } from '@/components/ui/button'
+import { ScrollArea } from '@/components/ui/scroll-area'
 
 interface ApiRecord {
   Id: number
@@ -26,6 +29,8 @@ export function Map({ onPointCountChange }: MapProps) {
   const mapInstance = useRef<L.Map | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [apiData, setApiData] = useState<ApiRecord[] | null>(null)
+  const [showDebug, setShowDebug] = useState(false)
 
   useEffect(() => {
     if (!mapContainer.current || mapInstance.current) return
@@ -75,6 +80,8 @@ export function Map({ onPointCountChange }: MapProps) {
           
           offset += limit
         }
+
+        setApiData(allRecords)
         
         const markers = L.markerClusterGroup({
           chunkedLoading: true,
@@ -172,6 +179,52 @@ export function Map({ onPointCountChange }: MapProps) {
         ref={mapContainer} 
         className="w-full h-full"
       />
+      
+      <Button
+        onClick={() => setShowDebug(!showDebug)}
+        className="absolute top-4 right-4 z-[1000] shadow-lg"
+        size="sm"
+      >
+        <Bug size={18} weight="fill" className="mr-2" />
+        Debug
+      </Button>
+
+      {showDebug && apiData && (
+        <div className="absolute top-4 right-4 bottom-4 w-96 bg-card border border-border rounded-lg shadow-xl z-[1001] flex flex-col">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+            <div className="flex items-center gap-2">
+              <Bug size={20} weight="fill" className="text-primary" />
+              <h3 className="font-semibold text-sm">API Response Debug</h3>
+            </div>
+            <Button
+              onClick={() => setShowDebug(false)}
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+            >
+              <X size={18} />
+            </Button>
+          </div>
+          
+          <div className="px-4 py-2 border-b border-border bg-muted">
+            <p className="text-xs text-muted-foreground">
+              Total Records: <span className="font-semibold text-foreground">{apiData.length}</span>
+            </p>
+            <p className="text-xs text-muted-foreground">
+              With Coordinates: <span className="font-semibold text-foreground">
+                {apiData.filter(r => r.GeoData?.coordinates).length}
+              </span>
+            </p>
+          </div>
+
+          <ScrollArea className="flex-1 px-4 py-3">
+            <pre className="text-xs font-mono text-foreground whitespace-pre-wrap break-words">
+              {JSON.stringify(apiData, null, 2)}
+            </pre>
+          </ScrollArea>
+        </div>
+      )}
+      
       {loading && (
         <div className="absolute inset-0 bg-background/80 flex items-center justify-center z-[1000]">
           <div className="text-center">
