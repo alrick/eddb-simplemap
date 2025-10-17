@@ -117,7 +117,6 @@ export function Map() {
     <div 
       ref={mapContainer} 
       className="w-full h-full"
-      style={{ minHeight: '400px' }}
     />
   )
 }
