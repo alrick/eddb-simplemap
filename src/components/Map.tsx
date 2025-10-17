@@ -561,7 +561,7 @@ export function Map({ onPointCountChange }: MapProps) {
                   Selected: <span className="font-semibold text-foreground">{selectedMaterials.size}</span> of <span className="font-semibold text-foreground">{materials.length}</span>
                 </p>
               </div>
-              <ScrollArea className="flex-1">
+              <ScrollArea className="flex-1 h-[400px]">
                 <div className="px-4 py-3 space-y-3">
                   {materials.map(material => (
                     <div key={material} className="flex items-center space-x-2">
@@ -591,7 +591,7 @@ export function Map({ onPointCountChange }: MapProps) {
                   Selected: <span className="font-semibold text-foreground">{selectedMorphologies.size}</span> of <span className="font-semibold text-foreground">{morphologies.length}</span>
                 </p>
               </div>
-              <ScrollArea className="flex-1">
+              <ScrollArea className="flex-1 h-[400px]">
                 <div className="px-4 py-3 space-y-3">
                   {morphologies.map(morphology => (
                     <div key={morphology} className="flex items-center space-x-2">
@@ -621,7 +621,7 @@ export function Map({ onPointCountChange }: MapProps) {
                   Selected: <span className="font-semibold text-foreground">{selectedGames.size}</span> of <span className="font-semibold text-foreground">{games.length}</span>
                 </p>
               </div>
-              <ScrollArea className="flex-1">
+              <ScrollArea className="flex-1 h-[400px]">
                 <div className="px-4 py-3 space-y-3">
                   {games.map(game => (
                     <div key={game} className="flex items-center space-x-2">
@@ -651,7 +651,7 @@ export function Map({ onPointCountChange }: MapProps) {
                   Selected: <span className="font-semibold text-foreground">{selectedConservationStates.size}</span> of <span className="font-semibold text-foreground">{conservationStates.length}</span>
                 </p>
               </div>
-              <ScrollArea className="flex-1">
+              <ScrollArea className="flex-1 h-[400px]">
                 <div className="px-4 py-3 space-y-3">
                   {conservationStates.map(state => (
                     <div key={state} className="flex items-center space-x-2">
@@ -681,7 +681,7 @@ export function Map({ onPointCountChange }: MapProps) {
                   Selected: <span className="font-semibold text-foreground">{selectedTypologies.size}</span> of <span className="font-semibold text-foreground">{typologies.length}</span>
                 </p>
               </div>
-              <ScrollArea className="flex-1">
+              <ScrollArea className="flex-1 h-[400px]">
                 <div className="px-4 py-3 space-y-3">
                   {typologies.map(typology => (
                     <div key={typology} className="flex items-center space-x-2">
