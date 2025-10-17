@@ -128,8 +128,10 @@ export function Map({ onPointCountChange }: MapProps) {
               if (!isNaN(lat) && !isNaN(lng)) {
                 const marker = L.marker([lat, lng], { icon: customIcon })
                 
+                const title = record.Title || 'Untitled'
+                
                 const popupContent = Object.entries(record)
-                  .filter(([key]) => key !== 'GeoData' && key !== 'Id')
+                  .filter(([key]) => key !== 'GeoData' && key !== 'Id' && key !== 'Title' && key !== 'CreatedAt' && key !== 'UpdatedAt')
                   .map(([key, value]) => {
                     if (value !== null && value !== undefined && value !== '') {
                       return `<p><strong>${key}:</strong> ${value}</p>`
@@ -139,9 +141,7 @@ export function Map({ onPointCountChange }: MapProps) {
                   .filter(Boolean)
                   .join('')
 
-                if (popupContent) {
-                  marker.bindPopup(`<div>${popupContent}</div>`)
-                }
+                marker.bindPopup(`<div><h3>${title}</h3>${popupContent}</div>`)
 
                 markers.addLayer(marker)
                 validPoints++
