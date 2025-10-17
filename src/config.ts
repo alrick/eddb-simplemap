@@ -71,7 +71,7 @@ export const config: AppConfig = {
   },
   
   debug: {
-    enabled: true,
+    enabled: false,
     showConsoleLog: true
   },
   
