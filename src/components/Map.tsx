@@ -17,7 +17,11 @@ interface ApiResponse {
   }
 }
 
-export function Map() {
+interface MapProps {
+  onPointCountChange?: (count: number) => void
+}
+
+export function Map({ onPointCountChange }: MapProps) {
   const mapContainer = useRef<HTMLDivElement>(null)
   const mapInstance = useRef<L.Map | null>(null)
   const [loading, setLoading] = useState(true)
@@ -145,6 +149,7 @@ export function Map() {
           map.fitBounds(markers.getBounds(), { padding: [50, 50] })
         }
 
+        onPointCountChange?.(validPoints)
         setLoading(false)
       } catch (err) {
         console.error('Error fetching map data:', err)
