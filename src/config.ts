@@ -8,6 +8,7 @@ export interface AppConfig {
   appName: string
   apiUrl: string
   apiToken: string
+  geoDataField: string
   filters: {
     material: FilterConfig
     morphology: FilterConfig
@@ -33,6 +34,8 @@ export const config: AppConfig = {
   
   apiUrl: 'https://eddb.unifr.ch/noco/api/v2/tables/mw4mvjms6nkuq0f/records',
   apiToken: 'hCmfVFzK4mpjHkyLJzD1U2plqzJInYmdhzQ8NrzR',
+  
+  geoDataField: 'GeoData',
   
   filters: {
     material: {

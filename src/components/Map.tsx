@@ -19,7 +19,6 @@ interface ImageData {
 
 interface ApiRecord {
   Id: number
-  GeoData?: string
   Image?: ImageData[]
   [key: string]: any
 }
@@ -153,8 +152,8 @@ export function Map({ onPointCountChange }: MapProps) {
         const typologyCountMap: Record<string, number> = {}
         
         allRecords.forEach(record => {
-          if (record.GeoData && typeof record.GeoData === 'string') {
-            const parts = record.GeoData.split(';')
+          if (record[config.geoDataField] && typeof record[config.geoDataField] === 'string') {
+            const parts = record[config.geoDataField].split(';')
             if (parts.length === 2) {
               const lat = parseFloat(parts[0])
               const lng = parseFloat(parts[1])
@@ -279,8 +278,8 @@ export function Map({ onPointCountChange }: MapProps) {
 
         let validPoints = 0
         allRecords.forEach(record => {
-          if (record.GeoData && typeof record.GeoData === 'string') {
-            const parts = record.GeoData.split(';')
+          if (record[config.geoDataField] && typeof record[config.geoDataField] === 'string') {
+            const parts = record[config.geoDataField].split(';')
             if (parts.length === 2) {
               const lat = parseFloat(parts[0])
               const lng = parseFloat(parts[1])
@@ -298,7 +297,7 @@ export function Map({ onPointCountChange }: MapProps) {
                 
                 const popupContent = Object.entries(record)
                   .filter(([key]) => 
-                    key !== 'GeoData' && 
+                    key !== config.geoDataField && 
                     key !== 'Id' && 
                     key !== 'Title' && 
                     key !== 'CreatedAt' && 
@@ -508,8 +507,8 @@ export function Map({ onPointCountChange }: MapProps) {
         }
       }
 
-      if (record.GeoData && typeof record.GeoData === 'string') {
-        const parts = record.GeoData.split(';')
+      if (record[config.geoDataField] && typeof record[config.geoDataField] === 'string') {
+        const parts = record[config.geoDataField].split(';')
         if (parts.length === 2) {
           const lat = parseFloat(parts[0])
           const lng = parseFloat(parts[1])
@@ -527,7 +526,7 @@ export function Map({ onPointCountChange }: MapProps) {
             
             const popupContent = Object.entries(record)
               .filter(([key]) => 
-                key !== 'GeoData' && 
+                key !== config.geoDataField && 
                 key !== 'Id' && 
                 key !== 'Title' && 
                 key !== 'CreatedAt' && 
@@ -1175,7 +1174,7 @@ export function Map({ onPointCountChange }: MapProps) {
             </p>
             <p className="text-xs text-muted-foreground">
               With Coordinates: <span className="font-semibold text-foreground">
-                {apiData.filter(r => r.GeoData && typeof r.GeoData === 'string' && r.GeoData.includes(';')).length}
+                {apiData.filter(r => r[config.geoDataField] && typeof r[config.geoDataField] === 'string' && r[config.geoDataField].includes(';')).length}
               </span>
             </p>
           </div>
