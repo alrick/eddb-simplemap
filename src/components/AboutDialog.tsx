@@ -31,7 +31,7 @@ export function AboutDialog() {
     <Dialog>
       <DialogTrigger asChild>
         <Button
-          variant="secondary"
+          variant="default"
           size="sm"
           className="shadow-lg"
         >
