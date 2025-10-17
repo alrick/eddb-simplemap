@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { marked } from 'marked'
 import { toast } from 'sonner'
+import { config } from '@/config'
 
 interface ImageData {
   signedPath?: string
@@ -42,15 +43,17 @@ async function cacheImage(signedPath: string): Promise<string> {
   }
 
   try {
-    const fullUrl = `https://eddb.unifr.ch/noco/${signedPath}`
+    const fullUrl = `${config.eddbServiceUrl}/noco/${signedPath}`
     const response = await fetch(fullUrl)
     const blob = await response.blob()
     const objectUrl = URL.createObjectURL(blob)
     imageCache.set(signedPath, objectUrl)
     return objectUrl
   } catch (error) {
-    console.error('Error caching image:', error)
-    return `https://eddb.unifr.ch/noco/${signedPath}`
+    if (config.debug.showConsoleLog) {
+      console.error('Error caching image:', error)
+    }
+    return `${config.eddbServiceUrl}/noco/${signedPath}`
   }
 }
 
@@ -95,7 +98,7 @@ export function Map({ onPointCountChange }: MapProps) {
   useEffect(() => {
     if (!mapContainer.current || mapInstance.current) return
 
-    const map = L.map(mapContainer.current).setView([46.8, 8.2], 8)
+    const map = L.map(mapContainer.current).setView(config.map.defaultCenter as [number, number], config.map.defaultZoom)
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
@@ -114,10 +117,10 @@ export function Map({ onPointCountChange }: MapProps) {
         
         while (true) {
           const response = await fetch(
-            `https://eddb.unifr.ch/noco/api/v2/tables/mw4mvjms6nkuq0f/records?limit=${limit}&offset=${offset}`,
+            `${config.apiUrl}?limit=${limit}&offset=${offset}`,
             {
               headers: {
-                'xc-token': 'hCmfVFzK4mpjHkyLJzD1U2plqzJInYmdhzQ8NrzR'
+                'xc-token': config.apiToken
               }
             }
           )
@@ -238,7 +241,7 @@ export function Map({ onPointCountChange }: MapProps) {
         
         const markers = L.markerClusterGroup({
           chunkedLoading: true,
-          maxClusterRadius: 50,
+          maxClusterRadius: config.map.clusterRadius,
           spiderfyOnMaxZoom: true,
           showCoverageOnHover: false,
           zoomToBoundsOnClick: true
@@ -385,7 +388,9 @@ export function Map({ onPointCountChange }: MapProps) {
 
         map.addLayer(markers)
         
-        console.log(`Loaded ${allRecords.length} records, ${validPoints} with valid coordinates`)
+        if (config.debug.showConsoleLog) {
+          console.log(`Loaded ${allRecords.length} records, ${validPoints} with valid coordinates`)
+        }
         
         if (validPoints > 0 && markers.getBounds().isValid()) {
           map.fitBounds(markers.getBounds(), { padding: [50, 50] })
@@ -394,7 +399,9 @@ export function Map({ onPointCountChange }: MapProps) {
         onPointCountChange?.(validPoints)
         setLoading(false)
       } catch (err) {
-        console.error('Error fetching map data:', err)
+        if (config.debug.showConsoleLog) {
+          console.error('Error fetching map data:', err)
+        }
         setError(err instanceof Error ? err.message : 'Failed to load map data')
         setLoading(false)
       }
@@ -444,47 +451,57 @@ export function Map({ onPointCountChange }: MapProps) {
 
     let validPoints = 0
     apiData.forEach(record => {
-      const recordMaterial = typeof record.Material === 'string' && record.Material.trim() !== '' 
-        ? record.Material 
-        : 'Unknown'
-      
-      if (!selectedMaterials.has(recordMaterial)) {
-        return
+      if (config.filters.material.enabled) {
+        const recordMaterial = typeof record[config.filters.material.field] === 'string' && record[config.filters.material.field].trim() !== '' 
+          ? record[config.filters.material.field] 
+          : 'Unknown'
+        
+        if (!selectedMaterials.has(recordMaterial)) {
+          return
+        }
       }
       
-      const recordMorphology = typeof record.Morphology === 'string' && record.Morphology.trim() !== '' 
-        ? record.Morphology 
-        : 'Unknown'
-      
-      if (!selectedMorphologies.has(recordMorphology)) {
-        return
+      if (config.filters.morphology.enabled) {
+        const recordMorphology = typeof record[config.filters.morphology.field] === 'string' && record[config.filters.morphology.field].trim() !== '' 
+          ? record[config.filters.morphology.field] 
+          : 'Unknown'
+        
+        if (!selectedMorphologies.has(recordMorphology)) {
+          return
+        }
       }
       
-      const recordGame = typeof record.Game === 'string' && record.Game.trim() !== '' 
-        ? record.Game 
-        : 'Unknown'
-      
-      if (!selectedGames.has(recordGame)) {
-        return
+      if (config.filters.game.enabled) {
+        const recordGame = typeof record[config.filters.game.field] === 'string' && record[config.filters.game.field].trim() !== '' 
+          ? record[config.filters.game.field] 
+          : 'Unknown'
+        
+        if (!selectedGames.has(recordGame)) {
+          return
+        }
       }
       
-      const recordConservationState = typeof record.ConservationState === 'string' && record.ConservationState.trim() !== '' 
-        ? record.ConservationState 
-        : 'Unknown'
-      
-      if (!selectedConservationStates.has(recordConservationState)) {
-        return
+      if (config.filters.conservationState.enabled) {
+        const recordConservationState = typeof record[config.filters.conservationState.field] === 'string' && record[config.filters.conservationState.field].trim() !== '' 
+          ? record[config.filters.conservationState.field] 
+          : 'Unknown'
+        
+        if (!selectedConservationStates.has(recordConservationState)) {
+          return
+        }
       }
       
-      const recordTypology = typeof record.Typology === 'string' && record.Typology.trim() !== '' 
-        ? record.Typology 
-        : 'Unknown'
-      
-      if (!selectedTypologies.has(recordTypology)) {
-        return
+      if (config.filters.typology.enabled) {
+        const recordTypology = typeof record[config.filters.typology.field] === 'string' && record[config.filters.typology.field].trim() !== '' 
+          ? record[config.filters.typology.field] 
+          : 'Unknown'
+        
+        if (!selectedTypologies.has(recordTypology)) {
+          return
+        }
       }
 
-      if (filterHasImages) {
+      if (config.filters.hasImages.enabled && filterHasImages) {
         const hasImages = record.Image && Array.isArray(record.Image) && record.Image.length > 0 && record.Image.some((img: ImageData) => img.signedPath)
         if (!hasImages) {
           return
@@ -800,25 +817,30 @@ export function Map({ onPointCountChange }: MapProps) {
           </DialogContent>
         </Dialog>
 
-        <Button
-          onClick={() => setShowFilter(!showFilter)}
-          className="shadow-lg"
-          size="sm"
-          variant={showFilter ? "default" : "secondary"}
-        >
-          <Funnel size={18} weight="fill" className="mr-2" />
-          Filter
-        </Button>
+        {(config.filters.material.enabled || config.filters.morphology.enabled || config.filters.game.enabled || 
+          config.filters.conservationState.enabled || config.filters.typology.enabled || config.filters.hasImages.enabled) && (
+          <Button
+            onClick={() => setShowFilter(!showFilter)}
+            className="shadow-lg"
+            size="sm"
+            variant={showFilter ? "default" : "secondary"}
+          >
+            <Funnel size={18} weight="fill" className="mr-2" />
+            Filter
+          </Button>
+        )}
         
-        <Button
-          onClick={() => setShowDebug(!showDebug)}
-          className="shadow-lg"
-          size="sm"
-          variant={showDebug ? "default" : "secondary"}
-        >
-          <Bug size={18} weight="fill" className="mr-2" />
-          Debug
-        </Button>
+        {config.debug.enabled && (
+          <Button
+            onClick={() => setShowDebug(!showDebug)}
+            className="shadow-lg"
+            size="sm"
+            variant={showDebug ? "default" : "secondary"}
+          >
+            <Bug size={18} weight="fill" className="mr-2" />
+            Debug
+          </Button>
+        )}
       </div>
 
       {showFilter && (
@@ -849,80 +871,94 @@ export function Map({ onPointCountChange }: MapProps) {
             </div>
           </div>
 
-          <div className="px-4 py-3 border-b border-border bg-muted/50">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Image size={18} weight="fill" className="text-primary" />
-                <Label htmlFor="filter-images" className="text-sm font-medium cursor-pointer">
-                  Only show points with images
-                </Label>
+          {config.filters.hasImages.enabled && (
+            <div className="px-4 py-3 border-b border-border bg-muted/50">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Image size={18} weight="fill" className="text-primary" />
+                  <Label htmlFor="filter-images" className="text-sm font-medium cursor-pointer">
+                    Only show points with images
+                  </Label>
+                </div>
+                <Switch
+                  id="filter-images"
+                  checked={filterHasImages}
+                  onCheckedChange={setFilterHasImages}
+                />
               </div>
-              <Switch
-                id="filter-images"
-                checked={filterHasImages}
-                onCheckedChange={setFilterHasImages}
-              />
             </div>
-          </div>
+          )}
 
-          <Tabs defaultValue="material" className="w-full">
+          <Tabs defaultValue={
+            config.filters.material.enabled ? "material" : 
+            config.filters.morphology.enabled ? "morphology" :
+            config.filters.game.enabled ? "game" :
+            config.filters.conservationState.enabled ? "conservation" :
+            "typology"
+          } className="w-full">
             <div className="px-4 pt-3 pb-2 sticky top-[114px] bg-card z-10">
-              <TabsList className="grid w-full grid-cols-5 h-auto">
-                <TabsTrigger value="material" className="text-[10px] px-1 py-1.5">Material</TabsTrigger>
-                <TabsTrigger value="morphology" className="text-[10px] px-1 py-1.5">Morph.</TabsTrigger>
-                <TabsTrigger value="game" className="text-[10px] px-1 py-1.5">Game</TabsTrigger>
-                <TabsTrigger value="conservation" className="text-[10px] px-1 py-1.5">State</TabsTrigger>
-                <TabsTrigger value="typology" className="text-[10px] px-1 py-1.5">Type</TabsTrigger>
+              <TabsList className="grid w-full h-auto" style={{ gridTemplateColumns: `repeat(${
+                [config.filters.material.enabled, config.filters.morphology.enabled, config.filters.game.enabled, 
+                 config.filters.conservationState.enabled, config.filters.typology.enabled].filter(Boolean).length
+              }, 1fr)` }}>
+                {config.filters.material.enabled && <TabsTrigger value="material" className="text-[10px] px-1 py-1.5">{config.filters.material.label}</TabsTrigger>}
+                {config.filters.morphology.enabled && <TabsTrigger value="morphology" className="text-[10px] px-1 py-1.5">Morph.</TabsTrigger>}
+                {config.filters.game.enabled && <TabsTrigger value="game" className="text-[10px] px-1 py-1.5">{config.filters.game.label}</TabsTrigger>}
+                {config.filters.conservationState.enabled && <TabsTrigger value="conservation" className="text-[10px] px-1 py-1.5">State</TabsTrigger>}
+                {config.filters.typology.enabled && <TabsTrigger value="typology" className="text-[10px] px-1 py-1.5">Type</TabsTrigger>}
               </TabsList>
             </div>
             
-            <TabsContent value="material" className="mt-0">
-              <div className="px-4 py-2 border-b border-border bg-muted flex items-center justify-between">
-                <p className="text-xs text-muted-foreground">
-                  Selected: <span className="font-semibold text-foreground">{selectedMaterials.size}</span> of <span className="font-semibold text-foreground">{materials.length}</span>
-                </p>
-                <div className="flex gap-1">
-                  <Button
-                    onClick={handleSelectAllMaterials}
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 text-xs px-2"
-                  >
-                    All
-                  </Button>
-                  <Button
-                    onClick={handleDeselectAllMaterials}
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 text-xs px-2"
-                  >
-                    None
-                  </Button>
-                </div>
-              </div>
-              <div className="px-4 py-3 space-y-3">
-                {materials.map(material => (
-                  <div key={material} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`material-${material}`}
-                      checked={selectedMaterials.has(material)}
-                      onCheckedChange={() => handleMaterialToggle(material)}
-                    />
-                    <Label
-                      htmlFor={`material-${material}`}
-                      className="text-sm font-normal cursor-pointer flex-1"
+            {config.filters.material.enabled && (
+              <TabsContent value="material" className="mt-0">
+                <div className="px-4 py-2 border-b border-border bg-muted flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground">
+                    Selected: <span className="font-semibold text-foreground">{selectedMaterials.size}</span> of <span className="font-semibold text-foreground">{materials.length}</span>
+                  </p>
+                  <div className="flex gap-1">
+                    <Button
+                      onClick={handleSelectAllMaterials}
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 text-xs px-2"
                     >
-                      {material}
-                    </Label>
-                    <span className="text-xs text-muted-foreground font-medium">
-                      {materialCounts[material] || 0}
-                    </span>
+                      All
+                    </Button>
+                    <Button
+                      onClick={handleDeselectAllMaterials}
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 text-xs px-2"
+                    >
+                      None
+                    </Button>
                   </div>
-                ))}
-              </div>
-            </TabsContent>
+                </div>
+                <div className="px-4 py-3 space-y-3">
+                  {materials.map(material => (
+                    <div key={material} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`material-${material}`}
+                        checked={selectedMaterials.has(material)}
+                        onCheckedChange={() => handleMaterialToggle(material)}
+                      />
+                      <Label
+                        htmlFor={`material-${material}`}
+                        className="text-sm font-normal cursor-pointer flex-1"
+                      >
+                        {material}
+                      </Label>
+                      <span className="text-xs text-muted-foreground font-medium">
+                        {materialCounts[material] || 0}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </TabsContent>
+            )}
             
-            <TabsContent value="morphology" className="mt-0">
+            {config.filters.morphology.enabled && (
+              <TabsContent value="morphology" className="mt-0">
               <div className="px-4 py-2 border-b border-border bg-muted flex items-center justify-between">
                 <p className="text-xs text-muted-foreground">
                   Selected: <span className="font-semibold text-foreground">{selectedMorphologies.size}</span> of <span className="font-semibold text-foreground">{morphologies.length}</span>
@@ -967,8 +1003,10 @@ export function Map({ onPointCountChange }: MapProps) {
                 ))}
               </div>
             </TabsContent>
+            )}
             
-            <TabsContent value="game" className="mt-0">
+            {config.filters.game.enabled && (
+              <TabsContent value="game" className="mt-0">
               <div className="px-4 py-2 border-b border-border bg-muted flex items-center justify-between">
                 <p className="text-xs text-muted-foreground">
                   Selected: <span className="font-semibold text-foreground">{selectedGames.size}</span> of <span className="font-semibold text-foreground">{games.length}</span>
@@ -1013,8 +1051,10 @@ export function Map({ onPointCountChange }: MapProps) {
                 ))}
               </div>
             </TabsContent>
+            )}
             
-            <TabsContent value="conservation" className="mt-0">
+            {config.filters.conservationState.enabled && (
+              <TabsContent value="conservation" className="mt-0">
               <div className="px-4 py-2 border-b border-border bg-muted flex items-center justify-between">
                 <p className="text-xs text-muted-foreground">
                   Selected: <span className="font-semibold text-foreground">{selectedConservationStates.size}</span> of <span className="font-semibold text-foreground">{conservationStates.length}</span>
@@ -1059,8 +1099,10 @@ export function Map({ onPointCountChange }: MapProps) {
                 ))}
               </div>
             </TabsContent>
+            )}
             
-            <TabsContent value="typology" className="mt-0">
+            {config.filters.typology.enabled && (
+              <TabsContent value="typology" className="mt-0">
               <div className="px-4 py-2 border-b border-border bg-muted flex items-center justify-between">
                 <p className="text-xs text-muted-foreground">
                   Selected: <span className="font-semibold text-foreground">{selectedTypologies.size}</span> of <span className="font-semibold text-foreground">{typologies.length}</span>
@@ -1105,6 +1147,7 @@ export function Map({ onPointCountChange }: MapProps) {
                 ))}
               </div>
             </TabsContent>
+            )}
           </Tabs>
         </div>
       )}

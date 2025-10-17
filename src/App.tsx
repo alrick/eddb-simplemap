@@ -3,6 +3,7 @@ import { Map } from './components/Map'
 import { MapTrifold, MapPin } from '@phosphor-icons/react'
 import { Toaster } from '@/components/ui/sonner'
 import unifrLogo from '@/assets/images/unifr-logo.jpg'
+import { config } from './config'
 
 function App() {
   const [pointCount, setPointCount] = useState<number | null>(null)
@@ -22,12 +23,12 @@ function App() {
             </div>
             <div>
               <h1 className="text-2xl font-semibold text-foreground tracking-tight">
-                Ludus
+                {config.appName}
               </h1>
               <p className="text-xs text-muted-foreground mt-0.5">
                 Data from{' '}
                 <a 
-                  href="https://eddb.unifr.ch" 
+                  href={config.eddbServiceUrl} 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="text-primary hover:underline font-medium"
