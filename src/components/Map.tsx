@@ -33,6 +33,7 @@ export function Map({ onPointCountChange }: MapProps) {
   const [showDebug, setShowDebug] = useState(false)
   const [showFilter, setShowFilter] = useState(false)
   const [materials, setMaterials] = useState<string[]>([])
+  const [materialCounts, setMaterialCounts] = useState<Record<string, number>>({})
   const [selectedMaterials, setSelectedMaterials] = useState<Set<string>>(new Set())
   const markerClusterGroup = useRef<L.MarkerClusterGroup | null>(null)
 
@@ -87,23 +88,36 @@ export function Map({ onPointCountChange }: MapProps) {
 
         setApiData(allRecords)
         
-        const uniqueMaterials = Array.from(new Set(
-          allRecords
-            .map(record => record.Material)
-            .filter((material): material is string => 
-              typeof material === 'string' && material.trim() !== ''
-            )
-        )).sort()
+        const materialCountMap: Record<string, number> = {}
         
-        const hasUnknown = allRecords.some(record => 
-          !record.Material || typeof record.Material !== 'string' || record.Material.trim() === ''
-        )
+        allRecords.forEach(record => {
+          if (record.GeoData && typeof record.GeoData === 'string') {
+            const parts = record.GeoData.split(';')
+            if (parts.length === 2) {
+              const lat = parseFloat(parts[0])
+              const lng = parseFloat(parts[1])
+              
+              if (!isNaN(lat) && !isNaN(lng)) {
+                const material = typeof record.Material === 'string' && record.Material.trim() !== '' 
+                  ? record.Material 
+                  : 'Unknown'
+                
+                materialCountMap[material] = (materialCountMap[material] || 0) + 1
+              }
+            }
+          }
+        })
         
-        const materialsWithUnknown = hasUnknown 
+        const uniqueMaterials = Object.keys(materialCountMap)
+          .filter(m => m !== 'Unknown')
+          .sort()
+        
+        const materialsWithUnknown = materialCountMap['Unknown'] 
           ? [...uniqueMaterials, 'Unknown']
           : uniqueMaterials
         
         setMaterials(materialsWithUnknown)
+        setMaterialCounts(materialCountMap)
         setSelectedMaterials(new Set(materialsWithUnknown))
         
         const markers = L.markerClusterGroup({
@@ -389,6 +403,9 @@ export function Map({ onPointCountChange }: MapProps) {
                   >
                     {material}
                   </Label>
+                  <span className="text-xs text-muted-foreground font-medium">
+                    {materialCounts[material] || 0}
+                  </span>
                 </div>
               ))}
             </div>
