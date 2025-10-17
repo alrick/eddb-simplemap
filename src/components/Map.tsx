@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 interface ApiRecord {
   Id: number
@@ -35,6 +36,18 @@ export function Map({ onPointCountChange }: MapProps) {
   const [materials, setMaterials] = useState<string[]>([])
   const [materialCounts, setMaterialCounts] = useState<Record<string, number>>({})
   const [selectedMaterials, setSelectedMaterials] = useState<Set<string>>(new Set())
+  const [morphologies, setMorphologies] = useState<string[]>([])
+  const [morphologyCounts, setMorphologyCounts] = useState<Record<string, number>>({})
+  const [selectedMorphologies, setSelectedMorphologies] = useState<Set<string>>(new Set())
+  const [games, setGames] = useState<string[]>([])
+  const [gameCounts, setGameCounts] = useState<Record<string, number>>({})
+  const [selectedGames, setSelectedGames] = useState<Set<string>>(new Set())
+  const [conservationStates, setConservationStates] = useState<string[]>([])
+  const [conservationStateCounts, setConservationStateCounts] = useState<Record<string, number>>({})
+  const [selectedConservationStates, setSelectedConservationStates] = useState<Set<string>>(new Set())
+  const [typologies, setTypologies] = useState<string[]>([])
+  const [typologyCounts, setTypologyCounts] = useState<Record<string, number>>({})
+  const [selectedTypologies, setSelectedTypologies] = useState<Set<string>>(new Set())
   const markerClusterGroup = useRef<L.MarkerClusterGroup | null>(null)
 
   useEffect(() => {
@@ -89,6 +102,10 @@ export function Map({ onPointCountChange }: MapProps) {
         setApiData(allRecords)
         
         const materialCountMap: Record<string, number> = {}
+        const morphologyCountMap: Record<string, number> = {}
+        const gameCountMap: Record<string, number> = {}
+        const conservationStateCountMap: Record<string, number> = {}
+        const typologyCountMap: Record<string, number> = {}
         
         allRecords.forEach(record => {
           if (record.GeoData && typeof record.GeoData === 'string') {
@@ -101,8 +118,27 @@ export function Map({ onPointCountChange }: MapProps) {
                 const material = typeof record.Material === 'string' && record.Material.trim() !== '' 
                   ? record.Material 
                   : 'Unknown'
-                
                 materialCountMap[material] = (materialCountMap[material] || 0) + 1
+                
+                const morphology = typeof record.Morphology === 'string' && record.Morphology.trim() !== '' 
+                  ? record.Morphology 
+                  : 'Unknown'
+                morphologyCountMap[morphology] = (morphologyCountMap[morphology] || 0) + 1
+                
+                const game = typeof record.Game === 'string' && record.Game.trim() !== '' 
+                  ? record.Game 
+                  : 'Unknown'
+                gameCountMap[game] = (gameCountMap[game] || 0) + 1
+                
+                const conservationState = typeof record.ConservationState === 'string' && record.ConservationState.trim() !== '' 
+                  ? record.ConservationState 
+                  : 'Unknown'
+                conservationStateCountMap[conservationState] = (conservationStateCountMap[conservationState] || 0) + 1
+                
+                const typology = typeof record.Typology === 'string' && record.Typology.trim() !== '' 
+                  ? record.Typology 
+                  : 'Unknown'
+                typologyCountMap[typology] = (typologyCountMap[typology] || 0) + 1
               }
             }
           }
@@ -111,14 +147,52 @@ export function Map({ onPointCountChange }: MapProps) {
         const uniqueMaterials = Object.keys(materialCountMap)
           .filter(m => m !== 'Unknown')
           .sort()
-        
         const materialsWithUnknown = materialCountMap['Unknown'] 
           ? [...uniqueMaterials, 'Unknown']
           : uniqueMaterials
-        
         setMaterials(materialsWithUnknown)
         setMaterialCounts(materialCountMap)
         setSelectedMaterials(new Set(materialsWithUnknown))
+        
+        const uniqueMorphologies = Object.keys(morphologyCountMap)
+          .filter(m => m !== 'Unknown')
+          .sort()
+        const morphologiesWithUnknown = morphologyCountMap['Unknown'] 
+          ? [...uniqueMorphologies, 'Unknown']
+          : uniqueMorphologies
+        setMorphologies(morphologiesWithUnknown)
+        setMorphologyCounts(morphologyCountMap)
+        setSelectedMorphologies(new Set(morphologiesWithUnknown))
+        
+        const uniqueGames = Object.keys(gameCountMap)
+          .filter(g => g !== 'Unknown')
+          .sort()
+        const gamesWithUnknown = gameCountMap['Unknown'] 
+          ? [...uniqueGames, 'Unknown']
+          : uniqueGames
+        setGames(gamesWithUnknown)
+        setGameCounts(gameCountMap)
+        setSelectedGames(new Set(gamesWithUnknown))
+        
+        const uniqueConservationStates = Object.keys(conservationStateCountMap)
+          .filter(c => c !== 'Unknown')
+          .sort()
+        const conservationStatesWithUnknown = conservationStateCountMap['Unknown'] 
+          ? [...uniqueConservationStates, 'Unknown']
+          : uniqueConservationStates
+        setConservationStates(conservationStatesWithUnknown)
+        setConservationStateCounts(conservationStateCountMap)
+        setSelectedConservationStates(new Set(conservationStatesWithUnknown))
+        
+        const uniqueTypologies = Object.keys(typologyCountMap)
+          .filter(t => t !== 'Unknown')
+          .sort()
+        const typologiesWithUnknown = typologyCountMap['Unknown'] 
+          ? [...uniqueTypologies, 'Unknown']
+          : uniqueTypologies
+        setTypologies(typologiesWithUnknown)
+        setTypologyCounts(typologyCountMap)
+        setSelectedTypologies(new Set(typologiesWithUnknown))
         
         const markers = L.markerClusterGroup({
           chunkedLoading: true,
@@ -258,6 +332,38 @@ export function Map({ onPointCountChange }: MapProps) {
       if (!selectedMaterials.has(recordMaterial)) {
         return
       }
+      
+      const recordMorphology = typeof record.Morphology === 'string' && record.Morphology.trim() !== '' 
+        ? record.Morphology 
+        : 'Unknown'
+      
+      if (!selectedMorphologies.has(recordMorphology)) {
+        return
+      }
+      
+      const recordGame = typeof record.Game === 'string' && record.Game.trim() !== '' 
+        ? record.Game 
+        : 'Unknown'
+      
+      if (!selectedGames.has(recordGame)) {
+        return
+      }
+      
+      const recordConservationState = typeof record.ConservationState === 'string' && record.ConservationState.trim() !== '' 
+        ? record.ConservationState 
+        : 'Unknown'
+      
+      if (!selectedConservationStates.has(recordConservationState)) {
+        return
+      }
+      
+      const recordTypology = typeof record.Typology === 'string' && record.Typology.trim() !== '' 
+        ? record.Typology 
+        : 'Unknown'
+      
+      if (!selectedTypologies.has(recordTypology)) {
+        return
+      }
 
       if (record.GeoData && typeof record.GeoData === 'string') {
         const parts = record.GeoData.split(';')
@@ -295,7 +401,7 @@ export function Map({ onPointCountChange }: MapProps) {
     }
 
     onPointCountChange?.(validPoints)
-  }, [selectedMaterials, apiData, onPointCountChange])
+  }, [selectedMaterials, selectedMorphologies, selectedGames, selectedConservationStates, selectedTypologies, apiData, onPointCountChange])
 
   const handleMaterialToggle = (material: string) => {
     setSelectedMaterials(prev => {
@@ -311,10 +417,66 @@ export function Map({ onPointCountChange }: MapProps) {
 
   const handleSelectAll = () => {
     setSelectedMaterials(new Set(materials))
+    setSelectedMorphologies(new Set(morphologies))
+    setSelectedGames(new Set(games))
+    setSelectedConservationStates(new Set(conservationStates))
+    setSelectedTypologies(new Set(typologies))
   }
 
   const handleDeselectAll = () => {
     setSelectedMaterials(new Set())
+    setSelectedMorphologies(new Set())
+    setSelectedGames(new Set())
+    setSelectedConservationStates(new Set())
+    setSelectedTypologies(new Set())
+  }
+  
+  const handleMorphologyToggle = (morphology: string) => {
+    setSelectedMorphologies(prev => {
+      const next = new Set(prev)
+      if (next.has(morphology)) {
+        next.delete(morphology)
+      } else {
+        next.add(morphology)
+      }
+      return next
+    })
+  }
+  
+  const handleGameToggle = (game: string) => {
+    setSelectedGames(prev => {
+      const next = new Set(prev)
+      if (next.has(game)) {
+        next.delete(game)
+      } else {
+        next.add(game)
+      }
+      return next
+    })
+  }
+  
+  const handleConservationStateToggle = (state: string) => {
+    setSelectedConservationStates(prev => {
+      const next = new Set(prev)
+      if (next.has(state)) {
+        next.delete(state)
+      } else {
+        next.add(state)
+      }
+      return next
+    })
+  }
+  
+  const handleTypologyToggle = (typology: string) => {
+    setSelectedTypologies(prev => {
+      const next = new Set(prev)
+      if (next.has(typology)) {
+        next.delete(typology)
+      } else {
+        next.add(typology)
+      }
+      return next
+    })
   }
 
   return (
@@ -351,7 +513,7 @@ export function Map({ onPointCountChange }: MapProps) {
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <div className="flex items-center gap-2">
               <Funnel size={20} weight="fill" className="text-primary" />
-              <h3 className="font-semibold text-sm">Filter by Material</h3>
+              <h3 className="font-semibold text-sm">Filters</h3>
             </div>
             <Button
               onClick={() => setShowFilter(false)}
@@ -382,34 +544,165 @@ export function Map({ onPointCountChange }: MapProps) {
             </Button>
           </div>
 
-          <div className="px-4 py-2 border-b border-border bg-muted">
-            <p className="text-xs text-muted-foreground">
-              Selected: <span className="font-semibold text-foreground">{selectedMaterials.size}</span> of <span className="font-semibold text-foreground">{materials.length}</span>
-            </p>
-          </div>
-
-          <ScrollArea className="flex-1 px-4 py-3">
-            <div className="space-y-3">
-              {materials.map(material => (
-                <div key={material} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`material-${material}`}
-                    checked={selectedMaterials.has(material)}
-                    onCheckedChange={() => handleMaterialToggle(material)}
-                  />
-                  <Label
-                    htmlFor={`material-${material}`}
-                    className="text-sm font-normal cursor-pointer flex-1"
-                  >
-                    {material}
-                  </Label>
-                  <span className="text-xs text-muted-foreground font-medium">
-                    {materialCounts[material] || 0}
-                  </span>
+          <Tabs defaultValue="material" className="flex-1 flex flex-col min-h-0">
+            <TabsList className="grid w-full grid-cols-5 mx-4 mt-3">
+              <TabsTrigger value="material" className="text-xs">Material</TabsTrigger>
+              <TabsTrigger value="morphology" className="text-xs">Morphology</TabsTrigger>
+              <TabsTrigger value="game" className="text-xs">Game</TabsTrigger>
+              <TabsTrigger value="conservation" className="text-xs">State</TabsTrigger>
+              <TabsTrigger value="typology" className="text-xs">Typology</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="material" className="flex-1 flex flex-col min-h-0 mt-0">
+              <div className="px-4 py-2 border-b border-border bg-muted">
+                <p className="text-xs text-muted-foreground">
+                  Selected: <span className="font-semibold text-foreground">{selectedMaterials.size}</span> of <span className="font-semibold text-foreground">{materials.length}</span>
+                </p>
+              </div>
+              <ScrollArea className="flex-1 px-4 py-3">
+                <div className="space-y-3">
+                  {materials.map(material => (
+                    <div key={material} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`material-${material}`}
+                        checked={selectedMaterials.has(material)}
+                        onCheckedChange={() => handleMaterialToggle(material)}
+                      />
+                      <Label
+                        htmlFor={`material-${material}`}
+                        className="text-sm font-normal cursor-pointer flex-1"
+                      >
+                        {material}
+                      </Label>
+                      <span className="text-xs text-muted-foreground font-medium">
+                        {materialCounts[material] || 0}
+                      </span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </ScrollArea>
+              </ScrollArea>
+            </TabsContent>
+            
+            <TabsContent value="morphology" className="flex-1 flex flex-col min-h-0 mt-0">
+              <div className="px-4 py-2 border-b border-border bg-muted">
+                <p className="text-xs text-muted-foreground">
+                  Selected: <span className="font-semibold text-foreground">{selectedMorphologies.size}</span> of <span className="font-semibold text-foreground">{morphologies.length}</span>
+                </p>
+              </div>
+              <ScrollArea className="flex-1 px-4 py-3">
+                <div className="space-y-3">
+                  {morphologies.map(morphology => (
+                    <div key={morphology} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`morphology-${morphology}`}
+                        checked={selectedMorphologies.has(morphology)}
+                        onCheckedChange={() => handleMorphologyToggle(morphology)}
+                      />
+                      <Label
+                        htmlFor={`morphology-${morphology}`}
+                        className="text-sm font-normal cursor-pointer flex-1"
+                      >
+                        {morphology}
+                      </Label>
+                      <span className="text-xs text-muted-foreground font-medium">
+                        {morphologyCounts[morphology] || 0}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </TabsContent>
+            
+            <TabsContent value="game" className="flex-1 flex flex-col min-h-0 mt-0">
+              <div className="px-4 py-2 border-b border-border bg-muted">
+                <p className="text-xs text-muted-foreground">
+                  Selected: <span className="font-semibold text-foreground">{selectedGames.size}</span> of <span className="font-semibold text-foreground">{games.length}</span>
+                </p>
+              </div>
+              <ScrollArea className="flex-1 px-4 py-3">
+                <div className="space-y-3">
+                  {games.map(game => (
+                    <div key={game} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`game-${game}`}
+                        checked={selectedGames.has(game)}
+                        onCheckedChange={() => handleGameToggle(game)}
+                      />
+                      <Label
+                        htmlFor={`game-${game}`}
+                        className="text-sm font-normal cursor-pointer flex-1"
+                      >
+                        {game}
+                      </Label>
+                      <span className="text-xs text-muted-foreground font-medium">
+                        {gameCounts[game] || 0}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </TabsContent>
+            
+            <TabsContent value="conservation" className="flex-1 flex flex-col min-h-0 mt-0">
+              <div className="px-4 py-2 border-b border-border bg-muted">
+                <p className="text-xs text-muted-foreground">
+                  Selected: <span className="font-semibold text-foreground">{selectedConservationStates.size}</span> of <span className="font-semibold text-foreground">{conservationStates.length}</span>
+                </p>
+              </div>
+              <ScrollArea className="flex-1 px-4 py-3">
+                <div className="space-y-3">
+                  {conservationStates.map(state => (
+                    <div key={state} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`conservation-${state}`}
+                        checked={selectedConservationStates.has(state)}
+                        onCheckedChange={() => handleConservationStateToggle(state)}
+                      />
+                      <Label
+                        htmlFor={`conservation-${state}`}
+                        className="text-sm font-normal cursor-pointer flex-1"
+                      >
+                        {state}
+                      </Label>
+                      <span className="text-xs text-muted-foreground font-medium">
+                        {conservationStateCounts[state] || 0}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </TabsContent>
+            
+            <TabsContent value="typology" className="flex-1 flex flex-col min-h-0 mt-0">
+              <div className="px-4 py-2 border-b border-border bg-muted">
+                <p className="text-xs text-muted-foreground">
+                  Selected: <span className="font-semibold text-foreground">{selectedTypologies.size}</span> of <span className="font-semibold text-foreground">{typologies.length}</span>
+                </p>
+              </div>
+              <ScrollArea className="flex-1 px-4 py-3">
+                <div className="space-y-3">
+                  {typologies.map(typology => (
+                    <div key={typology} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`typology-${typology}`}
+                        checked={selectedTypologies.has(typology)}
+                        onCheckedChange={() => handleTypologyToggle(typology)}
+                      />
+                      <Label
+                        htmlFor={`typology-${typology}`}
+                        className="text-sm font-normal cursor-pointer flex-1"
+                      >
+                        {typology}
+                      </Label>
+                      <span className="text-xs text-muted-foreground font-medium">
+                        {typologyCounts[typology] || 0}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </TabsContent>
+          </Tabs>
         </div>
       )}
 
