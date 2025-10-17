@@ -95,8 +95,16 @@ export function Map({ onPointCountChange }: MapProps) {
             )
         )).sort()
         
-        setMaterials(uniqueMaterials)
-        setSelectedMaterials(new Set(uniqueMaterials))
+        const hasUnknown = allRecords.some(record => 
+          !record.Material || typeof record.Material !== 'string' || record.Material.trim() === ''
+        )
+        
+        const materialsWithUnknown = hasUnknown 
+          ? [...uniqueMaterials, 'Unknown']
+          : uniqueMaterials
+        
+        setMaterials(materialsWithUnknown)
+        setSelectedMaterials(new Set(materialsWithUnknown))
         
         const markers = L.markerClusterGroup({
           chunkedLoading: true,
@@ -229,9 +237,11 @@ export function Map({ onPointCountChange }: MapProps) {
 
     let validPoints = 0
     apiData.forEach(record => {
-      const recordMaterial = typeof record.Material === 'string' ? record.Material : ''
+      const recordMaterial = typeof record.Material === 'string' && record.Material.trim() !== '' 
+        ? record.Material 
+        : 'Unknown'
       
-      if (recordMaterial && !selectedMaterials.has(recordMaterial)) {
+      if (!selectedMaterials.has(recordMaterial)) {
         return
       }
 
