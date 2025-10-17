@@ -279,6 +279,10 @@ export function Map({ onPointCountChange }: MapProps) {
                   )
                   .map(([key, value]) => {
                     if (value !== null && value !== undefined && value !== '') {
+                      if (key === 'PleiadesId') {
+                        const pleiadesUrl = `https://pleiades.stoa.org/places/${value}`
+                        return `<p><strong>${key}:</strong> <a href="${pleiadesUrl}" target="_blank" rel="noopener noreferrer" style="color: oklch(0.45 0.15 250); text-decoration: underline;">${value}</a></p>`
+                      }
                       const parsedValue = parseMarkdown(String(value))
                       return `<p><strong>${key}:</strong> ${parsedValue}</p>`
                     }
@@ -430,6 +434,10 @@ export function Map({ onPointCountChange }: MapProps) {
               )
               .map(([key, value]) => {
                 if (value !== null && value !== undefined && value !== '') {
+                  if (key === 'PleiadesId') {
+                    const pleiadesUrl = `https://pleiades.stoa.org/places/${value}`
+                    return `<p><strong>${key}:</strong> <a href="${pleiadesUrl}" target="_blank" rel="noopener noreferrer" style="color: oklch(0.45 0.15 250); text-decoration: underline;">${value}</a></p>`
+                  }
                   const parsedValue = parseMarkdown(String(value))
                   return `<p><strong>${key}:</strong> ${parsedValue}</p>`
                 }
