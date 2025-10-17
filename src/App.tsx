@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Map } from './components/Map'
 import { MapTrifold, MapPin } from '@phosphor-icons/react'
+import { Toaster } from '@/components/ui/sonner'
 import unifrLogo from '@/assets/images/unifr-logo.jpg'
 
 function App() {
@@ -51,6 +52,8 @@ function App() {
       <main className="flex-1 overflow-hidden">
         <Map onPointCountChange={setPointCount} />
       </main>
+      
+      <Toaster />
     </div>
   )
 }

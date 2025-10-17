@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
 import 'leaflet.markercluster'
-import { Bug, X, Funnel, ArrowCounterClockwise } from '@phosphor-icons/react'
+import { Bug, X, Funnel, ArrowCounterClockwise, Crosshair } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
 import { marked } from 'marked'
+import { toast } from 'sonner'
 
 interface ApiRecord {
   Id: number
@@ -58,6 +61,9 @@ export function Map({ onPointCountChange }: MapProps) {
   const [typologyCounts, setTypologyCounts] = useState<Record<string, number>>({})
   const [selectedTypologies, setSelectedTypologies] = useState<Set<string>>(new Set())
   const markerClusterGroup = useRef<L.MarkerClusterGroup | null>(null)
+  const markerMapRef = useRef(new globalThis.Map<number, L.Marker>())
+  const [showOpenById, setShowOpenById] = useState(false)
+  const [inputId, setInputId] = useState('')
 
   useEffect(() => {
     if (!mapContainer.current || mapInstance.current) return
@@ -286,6 +292,7 @@ export function Map({ onPointCountChange }: MapProps) {
                 marker.bindPopup(`<div><h3>${title}</h3>${locationsHtml}${popupContent}</div>`)
 
                 markers.addLayer(marker)
+                markerMapRef.current.set(record.Id, marker)
                 validPoints++
               }
             }
@@ -321,6 +328,7 @@ export function Map({ onPointCountChange }: MapProps) {
     if (!mapInstance.current || !markerClusterGroup.current || !apiData) return
 
     markerClusterGroup.current.clearLayers()
+    markerMapRef.current.clear()
 
     const customIcon = L.divIcon({
       className: 'custom-marker',
@@ -435,6 +443,7 @@ export function Map({ onPointCountChange }: MapProps) {
             marker.bindPopup(`<div><h3>${title}</h3>${locationsHtml}${popupContent}</div>`)
 
             markerClusterGroup.current!.addLayer(marker)
+            markerMapRef.current.set(record.Id, marker)
             validPoints++
           }
         }
@@ -556,6 +565,32 @@ export function Map({ onPointCountChange }: MapProps) {
     setSelectedTypologies(new Set(typologies))
   }
 
+  const handleOpenById = () => {
+    const id = parseInt(inputId.trim())
+    
+    if (isNaN(id)) {
+      toast.error('Please enter a valid numeric ID')
+      return
+    }
+
+    const marker = markerMapRef.current.get(id)
+    
+    if (!marker) {
+      toast.error(`No point found with ID: ${id}`)
+      return
+    }
+
+    const latLng = marker.getLatLng()
+    
+    if (mapInstance.current) {
+      mapInstance.current.setView(latLng, 18)
+      marker.openPopup()
+      setShowOpenById(false)
+      setInputId('')
+      toast.success(`Opened point with ID: ${id}`)
+    }
+  }
+
   return (
     <div className="relative w-full h-full">
       <div 
@@ -564,6 +599,58 @@ export function Map({ onPointCountChange }: MapProps) {
       />
       
       <div className="absolute top-4 right-4 z-[1000] flex gap-2">
+        <Dialog open={showOpenById} onOpenChange={setShowOpenById}>
+          <DialogTrigger asChild>
+            <Button
+              className="shadow-lg"
+              size="sm"
+              variant="secondary"
+            >
+              <Crosshair size={18} weight="fill" className="mr-2" />
+              Open by ID
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Open Point by ID</DialogTitle>
+              <DialogDescription>
+                Enter the ID of a point to locate and open it on the map.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 pt-4">
+              <div className="space-y-2">
+                <Label htmlFor="point-id">Point ID</Label>
+                <Input
+                  id="point-id"
+                  type="number"
+                  placeholder="Enter point ID..."
+                  value={inputId}
+                  onChange={(e) => setInputId(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleOpenById()
+                    }
+                  }}
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowOpenById(false)
+                    setInputId('')
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={handleOpenById}>
+                  Open Point
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         <Button
           onClick={() => setShowFilter(!showFilter)}
           className="shadow-lg"
