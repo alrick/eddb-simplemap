@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
 import 'leaflet.markercluster'
-import { Bug, X } from '@phosphor-icons/react'
+import { Bug, X, Funnel } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Label } from '@/components/ui/label'
 
 interface ApiRecord {
   Id: number
@@ -29,6 +31,10 @@ export function Map({ onPointCountChange }: MapProps) {
   const [error, setError] = useState<string | null>(null)
   const [apiData, setApiData] = useState<ApiRecord[] | null>(null)
   const [showDebug, setShowDebug] = useState(false)
+  const [showFilter, setShowFilter] = useState(false)
+  const [materials, setMaterials] = useState<string[]>([])
+  const [selectedMaterials, setSelectedMaterials] = useState<Set<string>>(new Set())
+  const markerClusterGroup = useRef<L.MarkerClusterGroup | null>(null)
 
   useEffect(() => {
     if (!mapContainer.current || mapInstance.current) return
@@ -81,6 +87,17 @@ export function Map({ onPointCountChange }: MapProps) {
 
         setApiData(allRecords)
         
+        const uniqueMaterials = Array.from(new Set(
+          allRecords
+            .map(record => record.Material)
+            .filter((material): material is string => 
+              typeof material === 'string' && material.trim() !== ''
+            )
+        )).sort()
+        
+        setMaterials(uniqueMaterials)
+        setSelectedMaterials(new Set(uniqueMaterials))
+        
         const markers = L.markerClusterGroup({
           chunkedLoading: true,
           maxClusterRadius: 50,
@@ -116,6 +133,8 @@ export function Map({ onPointCountChange }: MapProps) {
           iconAnchor: [14, 28],
           popupAnchor: [0, -28]
         })
+
+        markerClusterGroup.current = markers
 
         let validPoints = 0
         allRecords.forEach(record => {
@@ -175,6 +194,105 @@ export function Map({ onPointCountChange }: MapProps) {
     }
   }, [])
 
+  useEffect(() => {
+    if (!mapInstance.current || !markerClusterGroup.current || !apiData) return
+
+    markerClusterGroup.current.clearLayers()
+
+    const customIcon = L.divIcon({
+      className: 'custom-marker',
+      html: `
+        <div style="
+          background-color: oklch(0.45 0.15 250);
+          border: 3px solid oklch(0.98 0 0);
+          border-radius: 50% 50% 50% 0;
+          width: 28px;
+          height: 28px;
+          transform: rotate(-45deg);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        ">
+          <div style="
+            width: 10px;
+            height: 10px;
+            background-color: oklch(0.98 0 0);
+            border-radius: 50%;
+          "></div>
+        </div>
+      `,
+      iconSize: [28, 28],
+      iconAnchor: [14, 28],
+      popupAnchor: [0, -28]
+    })
+
+    let validPoints = 0
+    apiData.forEach(record => {
+      const recordMaterial = typeof record.Material === 'string' ? record.Material : ''
+      
+      if (recordMaterial && !selectedMaterials.has(recordMaterial)) {
+        return
+      }
+
+      if (record.GeoData && typeof record.GeoData === 'string') {
+        const parts = record.GeoData.split(';')
+        if (parts.length === 2) {
+          const lat = parseFloat(parts[0])
+          const lng = parseFloat(parts[1])
+          
+          if (!isNaN(lat) && !isNaN(lng)) {
+            const marker = L.marker([lat, lng], { icon: customIcon })
+            
+            const title = record.Title || 'Untitled'
+            
+            const popupContent = Object.entries(record)
+              .filter(([key]) => key !== 'GeoData' && key !== 'Id' && key !== 'Title' && key !== 'CreatedAt' && key !== 'UpdatedAt')
+              .map(([key, value]) => {
+                if (value !== null && value !== undefined && value !== '') {
+                  return `<p><strong>${key}:</strong> ${value}</p>`
+                }
+                return ''
+              })
+              .filter(Boolean)
+              .join('')
+
+            marker.bindPopup(`<div><h3>${title}</h3>${popupContent}</div>`)
+
+            markerClusterGroup.current!.addLayer(marker)
+            validPoints++
+          }
+        }
+      }
+    })
+
+    if (validPoints > 0 && markerClusterGroup.current.getBounds().isValid()) {
+      mapInstance.current.fitBounds(markerClusterGroup.current.getBounds(), { padding: [50, 50] })
+    }
+
+    onPointCountChange?.(validPoints)
+  }, [selectedMaterials, apiData, onPointCountChange])
+
+  const handleMaterialToggle = (material: string) => {
+    setSelectedMaterials(prev => {
+      const next = new Set(prev)
+      if (next.has(material)) {
+        next.delete(material)
+      } else {
+        next.add(material)
+      }
+      return next
+    })
+  }
+
+  const handleSelectAll = () => {
+    setSelectedMaterials(new Set(materials))
+  }
+
+  const handleDeselectAll = () => {
+    setSelectedMaterials(new Set())
+  }
+
   return (
     <div className="relative w-full h-full">
       <div 
@@ -182,17 +300,94 @@ export function Map({ onPointCountChange }: MapProps) {
         className="w-full h-full"
       />
       
-      <Button
-        onClick={() => setShowDebug(!showDebug)}
-        className="absolute top-4 right-4 z-[1000] shadow-lg"
-        size="sm"
-      >
-        <Bug size={18} weight="fill" className="mr-2" />
-        Debug
-      </Button>
+      <div className="absolute top-4 right-4 z-[1000] flex gap-2">
+        <Button
+          onClick={() => setShowFilter(!showFilter)}
+          className="shadow-lg"
+          size="sm"
+          variant={showFilter ? "default" : "secondary"}
+        >
+          <Funnel size={18} weight="fill" className="mr-2" />
+          Filter
+        </Button>
+        
+        <Button
+          onClick={() => setShowDebug(!showDebug)}
+          className="shadow-lg"
+          size="sm"
+          variant={showDebug ? "default" : "secondary"}
+        >
+          <Bug size={18} weight="fill" className="mr-2" />
+          Debug
+        </Button>
+      </div>
+
+      {showFilter && (
+        <div className="absolute top-16 right-4 w-80 bg-card border border-border rounded-lg shadow-xl z-[1001] flex flex-col max-h-[calc(100vh-6rem)]">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+            <div className="flex items-center gap-2">
+              <Funnel size={20} weight="fill" className="text-primary" />
+              <h3 className="font-semibold text-sm">Filter by Material</h3>
+            </div>
+            <Button
+              onClick={() => setShowFilter(false)}
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+            >
+              <X size={18} />
+            </Button>
+          </div>
+          
+          <div className="px-4 py-2 border-b border-border bg-muted flex gap-2">
+            <Button
+              onClick={handleSelectAll}
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs"
+            >
+              Select All
+            </Button>
+            <Button
+              onClick={handleDeselectAll}
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs"
+            >
+              Deselect All
+            </Button>
+          </div>
+
+          <div className="px-4 py-2 border-b border-border bg-muted">
+            <p className="text-xs text-muted-foreground">
+              Selected: <span className="font-semibold text-foreground">{selectedMaterials.size}</span> of <span className="font-semibold text-foreground">{materials.length}</span>
+            </p>
+          </div>
+
+          <ScrollArea className="flex-1 px-4 py-3">
+            <div className="space-y-3">
+              {materials.map(material => (
+                <div key={material} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`material-${material}`}
+                    checked={selectedMaterials.has(material)}
+                    onCheckedChange={() => handleMaterialToggle(material)}
+                  />
+                  <Label
+                    htmlFor={`material-${material}`}
+                    className="text-sm font-normal cursor-pointer flex-1"
+                  >
+                    {material}
+                  </Label>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+        </div>
+      )}
 
       {showDebug && apiData && (
-        <div className="absolute top-4 right-4 bottom-4 w-96 bg-card border border-border rounded-lg shadow-xl z-[1001] flex flex-col">
+        <div className="absolute top-16 right-4 bottom-4 w-96 bg-card border border-border rounded-lg shadow-xl z-[1001] flex flex-col">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <div className="flex items-center gap-2">
               <Bug size={20} weight="fill" className="text-primary" />
