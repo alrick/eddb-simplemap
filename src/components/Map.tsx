@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
 import 'leaflet.markercluster'
-import { Bug, X, Funnel, ArrowCounterClockwise, Crosshair } from '@phosphor-icons/react'
+import { Bug, X, Funnel, ArrowCounterClockwise, Crosshair, Image } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { Switch } from '@/components/ui/switch'
 import { marked } from 'marked'
 import { toast } from 'sonner'
 
@@ -85,6 +86,7 @@ export function Map({ onPointCountChange }: MapProps) {
   const [typologies, setTypologies] = useState<string[]>([])
   const [typologyCounts, setTypologyCounts] = useState<Record<string, number>>({})
   const [selectedTypologies, setSelectedTypologies] = useState<Set<string>>(new Set())
+  const [filterHasImages, setFilterHasImages] = useState(false)
   const markerClusterGroup = useRef<L.MarkerClusterGroup | null>(null)
   const markerMapRef = useRef(new globalThis.Map<number, L.Marker>())
   const [showOpenById, setShowOpenById] = useState(false)
@@ -482,6 +484,13 @@ export function Map({ onPointCountChange }: MapProps) {
         return
       }
 
+      if (filterHasImages) {
+        const hasImages = record.Image && Array.isArray(record.Image) && record.Image.length > 0 && record.Image.some((img: ImageData) => img.signedPath)
+        if (!hasImages) {
+          return
+        }
+      }
+
       if (record.GeoData && typeof record.GeoData === 'string') {
         const parts = record.GeoData.split(';')
         if (parts.length === 2) {
@@ -594,7 +603,7 @@ export function Map({ onPointCountChange }: MapProps) {
     }
 
     onPointCountChange?.(validPoints)
-  }, [selectedMaterials, selectedMorphologies, selectedGames, selectedConservationStates, selectedTypologies, apiData, onPointCountChange])
+  }, [selectedMaterials, selectedMorphologies, selectedGames, selectedConservationStates, selectedTypologies, filterHasImages, apiData, onPointCountChange])
 
   const handleMaterialToggle = (material: string) => {
     setSelectedMaterials(prev => {
@@ -702,6 +711,7 @@ export function Map({ onPointCountChange }: MapProps) {
     setSelectedGames(new Set(games))
     setSelectedConservationStates(new Set(conservationStates))
     setSelectedTypologies(new Set(typologies))
+    setFilterHasImages(false)
   }
 
   const handleOpenById = () => {
@@ -839,8 +849,24 @@ export function Map({ onPointCountChange }: MapProps) {
             </div>
           </div>
 
+          <div className="px-4 py-3 border-b border-border bg-muted/50">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Image size={18} weight="fill" className="text-primary" />
+                <Label htmlFor="filter-images" className="text-sm font-medium cursor-pointer">
+                  Only show points with images
+                </Label>
+              </div>
+              <Switch
+                id="filter-images"
+                checked={filterHasImages}
+                onCheckedChange={setFilterHasImages}
+              />
+            </div>
+          </div>
+
           <Tabs defaultValue="material" className="w-full">
-            <div className="px-4 pt-3 pb-2 sticky top-[57px] bg-card z-10">
+            <div className="px-4 pt-3 pb-2 sticky top-[114px] bg-card z-10">
               <TabsList className="grid w-full grid-cols-5 h-auto">
                 <TabsTrigger value="material" className="text-[10px] px-1 py-1.5">Material</TabsTrigger>
                 <TabsTrigger value="morphology" className="text-[10px] px-1 py-1.5">Morph.</TabsTrigger>
