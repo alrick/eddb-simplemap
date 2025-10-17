@@ -509,8 +509,8 @@ export function Map({ onPointCountChange }: MapProps) {
       </div>
 
       {showFilter && (
-        <div className="absolute top-16 right-4 w-80 bg-card border border-border rounded-lg shadow-xl z-[1001] flex flex-col max-h-[calc(100vh-6rem)]">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+        <div className="absolute top-16 right-4 w-96 bg-card border border-border rounded-lg shadow-xl z-[1001] flex flex-col max-h-[calc(100vh-7rem)]">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
             <div className="flex items-center gap-2">
               <Funnel size={20} weight="fill" className="text-primary" />
               <h3 className="font-semibold text-sm">Filters</h3>
@@ -525,7 +525,7 @@ export function Map({ onPointCountChange }: MapProps) {
             </Button>
           </div>
           
-          <div className="px-4 py-2 border-b border-border bg-muted flex gap-2">
+          <div className="px-4 py-2 border-b border-border bg-muted flex gap-2 shrink-0">
             <Button
               onClick={handleSelectAll}
               variant="ghost"
@@ -544,23 +544,25 @@ export function Map({ onPointCountChange }: MapProps) {
             </Button>
           </div>
 
-          <Tabs defaultValue="material" className="flex-1 flex flex-col min-h-0">
-            <TabsList className="grid w-full grid-cols-5 mx-4 mt-3">
-              <TabsTrigger value="material" className="text-xs">Material</TabsTrigger>
-              <TabsTrigger value="morphology" className="text-xs">Morphology</TabsTrigger>
-              <TabsTrigger value="game" className="text-xs">Game</TabsTrigger>
-              <TabsTrigger value="conservation" className="text-xs">State</TabsTrigger>
-              <TabsTrigger value="typology" className="text-xs">Typology</TabsTrigger>
-            </TabsList>
+          <Tabs defaultValue="material" className="flex-1 flex flex-col overflow-hidden">
+            <div className="px-4 pt-3 pb-2 shrink-0">
+              <TabsList className="grid w-full grid-cols-5 h-auto">
+                <TabsTrigger value="material" className="text-[10px] px-1 py-1.5">Material</TabsTrigger>
+                <TabsTrigger value="morphology" className="text-[10px] px-1 py-1.5">Morph.</TabsTrigger>
+                <TabsTrigger value="game" className="text-[10px] px-1 py-1.5">Game</TabsTrigger>
+                <TabsTrigger value="conservation" className="text-[10px] px-1 py-1.5">State</TabsTrigger>
+                <TabsTrigger value="typology" className="text-[10px] px-1 py-1.5">Type</TabsTrigger>
+              </TabsList>
+            </div>
             
-            <TabsContent value="material" className="flex-1 flex flex-col min-h-0 mt-0">
-              <div className="px-4 py-2 border-b border-border bg-muted">
+            <TabsContent value="material" className="flex-1 flex flex-col overflow-hidden mt-0">
+              <div className="px-4 py-2 border-b border-border bg-muted shrink-0">
                 <p className="text-xs text-muted-foreground">
                   Selected: <span className="font-semibold text-foreground">{selectedMaterials.size}</span> of <span className="font-semibold text-foreground">{materials.length}</span>
                 </p>
               </div>
-              <ScrollArea className="flex-1 px-4 py-3">
-                <div className="space-y-3">
+              <ScrollArea className="flex-1">
+                <div className="px-4 py-3 space-y-3">
                   {materials.map(material => (
                     <div key={material} className="flex items-center space-x-2">
                       <Checkbox
@@ -583,14 +585,14 @@ export function Map({ onPointCountChange }: MapProps) {
               </ScrollArea>
             </TabsContent>
             
-            <TabsContent value="morphology" className="flex-1 flex flex-col min-h-0 mt-0">
-              <div className="px-4 py-2 border-b border-border bg-muted">
+            <TabsContent value="morphology" className="flex-1 flex flex-col overflow-hidden mt-0">
+              <div className="px-4 py-2 border-b border-border bg-muted shrink-0">
                 <p className="text-xs text-muted-foreground">
                   Selected: <span className="font-semibold text-foreground">{selectedMorphologies.size}</span> of <span className="font-semibold text-foreground">{morphologies.length}</span>
                 </p>
               </div>
-              <ScrollArea className="flex-1 px-4 py-3">
-                <div className="space-y-3">
+              <ScrollArea className="flex-1">
+                <div className="px-4 py-3 space-y-3">
                   {morphologies.map(morphology => (
                     <div key={morphology} className="flex items-center space-x-2">
                       <Checkbox
@@ -613,14 +615,14 @@ export function Map({ onPointCountChange }: MapProps) {
               </ScrollArea>
             </TabsContent>
             
-            <TabsContent value="game" className="flex-1 flex flex-col min-h-0 mt-0">
-              <div className="px-4 py-2 border-b border-border bg-muted">
+            <TabsContent value="game" className="flex-1 flex flex-col overflow-hidden mt-0">
+              <div className="px-4 py-2 border-b border-border bg-muted shrink-0">
                 <p className="text-xs text-muted-foreground">
                   Selected: <span className="font-semibold text-foreground">{selectedGames.size}</span> of <span className="font-semibold text-foreground">{games.length}</span>
                 </p>
               </div>
-              <ScrollArea className="flex-1 px-4 py-3">
-                <div className="space-y-3">
+              <ScrollArea className="flex-1">
+                <div className="px-4 py-3 space-y-3">
                   {games.map(game => (
                     <div key={game} className="flex items-center space-x-2">
                       <Checkbox
@@ -643,14 +645,14 @@ export function Map({ onPointCountChange }: MapProps) {
               </ScrollArea>
             </TabsContent>
             
-            <TabsContent value="conservation" className="flex-1 flex flex-col min-h-0 mt-0">
-              <div className="px-4 py-2 border-b border-border bg-muted">
+            <TabsContent value="conservation" className="flex-1 flex flex-col overflow-hidden mt-0">
+              <div className="px-4 py-2 border-b border-border bg-muted shrink-0">
                 <p className="text-xs text-muted-foreground">
                   Selected: <span className="font-semibold text-foreground">{selectedConservationStates.size}</span> of <span className="font-semibold text-foreground">{conservationStates.length}</span>
                 </p>
               </div>
-              <ScrollArea className="flex-1 px-4 py-3">
-                <div className="space-y-3">
+              <ScrollArea className="flex-1">
+                <div className="px-4 py-3 space-y-3">
                   {conservationStates.map(state => (
                     <div key={state} className="flex items-center space-x-2">
                       <Checkbox
@@ -673,14 +675,14 @@ export function Map({ onPointCountChange }: MapProps) {
               </ScrollArea>
             </TabsContent>
             
-            <TabsContent value="typology" className="flex-1 flex flex-col min-h-0 mt-0">
-              <div className="px-4 py-2 border-b border-border bg-muted">
+            <TabsContent value="typology" className="flex-1 flex flex-col overflow-hidden mt-0">
+              <div className="px-4 py-2 border-b border-border bg-muted shrink-0">
                 <p className="text-xs text-muted-foreground">
                   Selected: <span className="font-semibold text-foreground">{selectedTypologies.size}</span> of <span className="font-semibold text-foreground">{typologies.length}</span>
                 </p>
               </div>
-              <ScrollArea className="flex-1 px-4 py-3">
-                <div className="space-y-3">
+              <ScrollArea className="flex-1">
+                <div className="px-4 py-3 space-y-3">
                   {typologies.map(typology => (
                     <div key={typology} className="flex items-center space-x-2">
                       <Checkbox
