@@ -38,17 +38,39 @@ export function Map() {
     const fetchData = async () => {
       try {
         setLoading(true)
-        const response = await fetch('https://eddb.unifr.ch/noco/api/v2/tables/mw4mvjms6nkuq0f/records', {
-          headers: {
-            'xc-token': 'hCmfVFzK4mpjHkyLJzD1U2plqzJInYmdhzQ8NrzR'
+        
+        let allRecords: ApiRecord[] = []
+        let offset = 0
+        const limit = 1000
+        
+        while (true) {
+          const response = await fetch(
+            `https://eddb.unifr.ch/noco/api/v2/tables/mw4mvjms6nkuq0f/records?limit=${limit}&offset=${offset}`,
+            {
+              headers: {
+                'xc-token': 'hCmfVFzK4mpjHkyLJzD1U2plqzJInYmdhzQ8NrzR'
+              }
+            }
+          )
+
+          if (!response.ok) {
+            throw new Error(`Failed to fetch data: ${response.status}`)
           }
-        })
 
-        if (!response.ok) {
-          throw new Error(`Failed to fetch data: ${response.status}`)
+          const data: ApiResponse = await response.json()
+          
+          if (!data.list || data.list.length === 0) {
+            break
+          }
+          
+          allRecords = allRecords.concat(data.list)
+          
+          if (data.list.length < limit) {
+            break
+          }
+          
+          offset += limit
         }
-
-        const data: ApiResponse = await response.json()
         
         const markers = L.markerClusterGroup({
           chunkedLoading: true,
@@ -87,7 +109,7 @@ export function Map() {
         })
 
         let validPoints = 0
-        data.list.forEach(record => {
+        allRecords.forEach(record => {
           if (record.GeoData?.coordinates) {
             const [lng, lat] = record.GeoData.coordinates
             
@@ -116,6 +138,8 @@ export function Map() {
         })
 
         map.addLayer(markers)
+        
+        console.log(`Loaded ${allRecords.length} records, ${validPoints} with valid coordinates`)
         
         if (validPoints > 0 && markers.getBounds().isValid()) {
           map.fitBounds(markers.getBounds(), { padding: [50, 50] })
