@@ -11,9 +11,22 @@ function App() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <MapTrifold size={28} weight="duotone" className="text-primary" />
-            <h1 className="text-2xl font-semibold text-foreground tracking-tight">
-              Ludus
-            </h1>
+            <div>
+              <h1 className="text-2xl font-semibold text-foreground tracking-tight">
+                Ludus
+              </h1>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Data from{' '}
+                <a 
+                  href="https://eddb.unifr.ch" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline font-medium"
+                >
+                  EDDB service
+                </a>
+              </p>
+            </div>
           </div>
           
           {pointCount !== null && (
