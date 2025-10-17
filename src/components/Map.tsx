@@ -1,111 +1,135 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
+import 'leaflet.markercluster'
 
-interface MapLocation {
-  id: string
-  name: string
-  description: string
-  lat: number
-  lng: number
+interface ApiRecord {
+  Id: number
+  GeoData?: {
+    coordinates: [number, number]
+  }
+  [key: string]: any
 }
 
-const locations: MapLocation[] = [
-  {
-    id: '1',
-    name: 'Eiffel Tower',
-    description: 'Iconic iron lattice tower in Paris, France',
-    lat: 48.8584,
-    lng: 2.2945
-  },
-  {
-    id: '2',
-    name: 'Statue of Liberty',
-    description: 'Colossal neoclassical sculpture in New York Harbor',
-    lat: 40.6892,
-    lng: -74.0445
-  },
-  {
-    id: '3',
-    name: 'Sydney Opera House',
-    description: 'Multi-venue performing arts centre in Sydney, Australia',
-    lat: -33.8568,
-    lng: 151.2153
-  },
-  {
-    id: '4',
-    name: 'Great Wall of China',
-    description: 'Ancient fortification in northern China',
-    lat: 40.4319,
-    lng: 116.5704
-  },
-  {
-    id: '5',
-    name: 'Machu Picchu',
-    description: '15th-century Inca citadel in Peru',
-    lat: -13.1631,
-    lng: -72.5450
+interface ApiResponse {
+  list: ApiRecord[]
+  pageInfo: {
+    totalRows?: number
   }
-]
+}
 
 export function Map() {
   const mapContainer = useRef<HTMLDivElement>(null)
   const mapInstance = useRef<L.Map | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!mapContainer.current || mapInstance.current) return
 
-    const map = L.map(mapContainer.current).setView([20, 0], 2)
+    const map = L.map(mapContainer.current).setView([46.8, 8.2], 8)
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       maxZoom: 19
     }).addTo(map)
 
-    const customIcon = L.divIcon({
-      className: 'custom-marker',
-      html: `
-        <div style="
-          background-color: oklch(0.45 0.15 250);
-          border: 3px solid oklch(0.98 0 0);
-          border-radius: 50% 50% 50% 0;
-          width: 32px;
-          height: 32px;
-          transform: rotate(-45deg);
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: all 0.2s ease;
-        ">
-          <div style="
-            width: 12px;
-            height: 12px;
-            background-color: oklch(0.98 0 0);
-            border-radius: 50%;
-          "></div>
-        </div>
-      `,
-      iconSize: [32, 32],
-      iconAnchor: [16, 32],
-      popupAnchor: [0, -32]
-    })
-
-    locations.forEach(location => {
-      const marker = L.marker([location.lat, location.lng], { icon: customIcon })
-        .addTo(map)
-        .bindPopup(`
-          <div>
-            <h3>${location.name}</h3>
-            <p>${location.description}</p>
-          </div>
-        `)
-
-      marker.on('mouseover', function() {
-        this.openPopup()
-      })
-    })
-
     mapInstance.current = map
+
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        const response = await fetch('https://eddb.unifr.ch/noco/api/v2/tables/mw4mvjms6nkuq0f/records', {
+          headers: {
+            'xc-token': 'hCmfVFzK4mpjHkyLJzD1U2plqzJInYmdhzQ8NrzR'
+          }
+        })
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch data: ${response.status}`)
+        }
+
+        const data: ApiResponse = await response.json()
+        
+        const markers = L.markerClusterGroup({
+          chunkedLoading: true,
+          maxClusterRadius: 50,
+          spiderfyOnMaxZoom: true,
+          showCoverageOnHover: false,
+          zoomToBoundsOnClick: true
+        })
+
+        const customIcon = L.divIcon({
+          className: 'custom-marker',
+          html: `
+            <div style="
+              background-color: oklch(0.45 0.15 250);
+              border: 3px solid oklch(0.98 0 0);
+              border-radius: 50% 50% 50% 0;
+              width: 28px;
+              height: 28px;
+              transform: rotate(-45deg);
+              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            ">
+              <div style="
+                width: 10px;
+                height: 10px;
+                background-color: oklch(0.98 0 0);
+                border-radius: 50%;
+              "></div>
+            </div>
+          `,
+          iconSize: [28, 28],
+          iconAnchor: [14, 28],
+          popupAnchor: [0, -28]
+        })
+
+        let validPoints = 0
+        data.list.forEach(record => {
+          if (record.GeoData?.coordinates) {
+            const [lng, lat] = record.GeoData.coordinates
+            
+            if (lat && lng && !isNaN(lat) && !isNaN(lng)) {
+              const marker = L.marker([lat, lng], { icon: customIcon })
+              
+              const popupContent = Object.entries(record)
+                .filter(([key]) => key !== 'GeoData' && key !== 'Id')
+                .map(([key, value]) => {
+                  if (value !== null && value !== undefined && value !== '') {
+                    return `<p><strong>${key}:</strong> ${value}</p>`
+                  }
+                  return ''
+                })
+                .filter(Boolean)
+                .join('')
+
+              if (popupContent) {
+                marker.bindPopup(`<div>${popupContent}</div>`)
+              }
+
+              markers.addLayer(marker)
+              validPoints++
+            }
+          }
+        })
+
+        map.addLayer(markers)
+        
+        if (validPoints > 0 && markers.getBounds().isValid()) {
+          map.fitBounds(markers.getBounds(), { padding: [50, 50] })
+        }
+
+        setLoading(false)
+      } catch (err) {
+        console.error('Error fetching map data:', err)
+        setError(err instanceof Error ? err.message : 'Failed to load map data')
+        setLoading(false)
+      }
+    }
+
+    fetchData()
 
     return () => {
       map.remove()
@@ -114,9 +138,24 @@ export function Map() {
   }, [])
 
   return (
-    <div 
-      ref={mapContainer} 
-      className="w-full h-full"
-    />
+    <div className="relative w-full h-full">
+      <div 
+        ref={mapContainer} 
+        className="w-full h-full"
+      />
+      {loading && (
+        <div className="absolute inset-0 bg-background/80 flex items-center justify-center z-[1000]">
+          <div className="text-center">
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent mb-2"></div>
+            <p className="text-sm text-muted-foreground">Loading map data...</p>
+          </div>
+        </div>
+      )}
+      {error && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-destructive text-destructive-foreground px-4 py-2 rounded-lg shadow-lg z-[1000]">
+          {error}
+        </div>
+      )}
+    </div>
   )
 }

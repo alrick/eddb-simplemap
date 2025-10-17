@@ -1,6 +1,8 @@
 @import 'tailwindcss';
 @import "tw-animate-css";
 @import 'leaflet/dist/leaflet.css';
+@import 'leaflet.markercluster/dist/MarkerCluster.css';
+@import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 
 @layer base {
   * {
@@ -91,4 +93,27 @@
 
 .leaflet-container {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.marker-cluster-small,
+.marker-cluster-medium,
+.marker-cluster-large {
+  background-color: oklch(0.45 0.15 250 / 0.6) !important;
+}
+
+.marker-cluster-small div,
+.marker-cluster-medium div,
+.marker-cluster-large div {
+  background-color: oklch(0.45 0.15 250) !important;
+  color: oklch(0.98 0 0) !important;
+  font-weight: 600;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.marker-cluster {
+  transition: all 0.2s ease;
+}
+
+.marker-cluster:hover {
+  transform: scale(1.1);
 }
