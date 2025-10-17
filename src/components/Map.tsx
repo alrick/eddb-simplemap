@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { marked } from 'marked'
 
 interface ApiRecord {
   Id: number
@@ -22,6 +23,15 @@ interface ApiResponse {
 
 interface MapProps {
   onPointCountChange?: (count: number) => void
+}
+
+function parseMarkdown(text: string): string {
+  try {
+    const parsed = marked.parse(text, { async: false }) as string
+    return parsed.replace(/<p>(.*?)<\/p>/g, '$1').trim()
+  } catch {
+    return text
+  }
 }
 
 export function Map({ onPointCountChange }: MapProps) {
@@ -263,7 +273,8 @@ export function Map({ onPointCountChange }: MapProps) {
                   )
                   .map(([key, value]) => {
                     if (value !== null && value !== undefined && value !== '') {
-                      return `<p><strong>${key}:</strong> ${value}</p>`
+                      const parsedValue = parseMarkdown(String(value))
+                      return `<p><strong>${key}:</strong> ${parsedValue}</p>`
                     }
                     return ''
                   })
@@ -411,7 +422,8 @@ export function Map({ onPointCountChange }: MapProps) {
               )
               .map(([key, value]) => {
                 if (value !== null && value !== undefined && value !== '') {
-                  return `<p><strong>${key}:</strong> ${value}</p>`
+                  const parsedValue = parseMarkdown(String(value))
+                  return `<p><strong>${key}:</strong> ${parsedValue}</p>`
                 }
                 return ''
               })
