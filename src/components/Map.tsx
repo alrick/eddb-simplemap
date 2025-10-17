@@ -7,9 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 
 interface ApiRecord {
   Id: number
-  GeoData?: {
-    coordinates: [number, number]
-  }
+  GeoData?: string
   [key: string]: any
 }
 
@@ -121,29 +119,33 @@ export function Map({ onPointCountChange }: MapProps) {
 
         let validPoints = 0
         allRecords.forEach(record => {
-          if (record.GeoData?.coordinates) {
-            const [lng, lat] = record.GeoData.coordinates
-            
-            if (lat && lng && !isNaN(lat) && !isNaN(lng)) {
-              const marker = L.marker([lat, lng], { icon: customIcon })
+          if (record.GeoData && typeof record.GeoData === 'string') {
+            const parts = record.GeoData.split(';')
+            if (parts.length === 2) {
+              const lat = parseFloat(parts[0])
+              const lng = parseFloat(parts[1])
               
-              const popupContent = Object.entries(record)
-                .filter(([key]) => key !== 'GeoData' && key !== 'Id')
-                .map(([key, value]) => {
-                  if (value !== null && value !== undefined && value !== '') {
-                    return `<p><strong>${key}:</strong> ${value}</p>`
-                  }
-                  return ''
-                })
-                .filter(Boolean)
-                .join('')
+              if (!isNaN(lat) && !isNaN(lng)) {
+                const marker = L.marker([lat, lng], { icon: customIcon })
+                
+                const popupContent = Object.entries(record)
+                  .filter(([key]) => key !== 'GeoData' && key !== 'Id')
+                  .map(([key, value]) => {
+                    if (value !== null && value !== undefined && value !== '') {
+                      return `<p><strong>${key}:</strong> ${value}</p>`
+                    }
+                    return ''
+                  })
+                  .filter(Boolean)
+                  .join('')
 
-              if (popupContent) {
-                marker.bindPopup(`<div>${popupContent}</div>`)
+                if (popupContent) {
+                  marker.bindPopup(`<div>${popupContent}</div>`)
+                }
+
+                markers.addLayer(marker)
+                validPoints++
               }
-
-              markers.addLayer(marker)
-              validPoints++
             }
           }
         })
@@ -212,7 +214,7 @@ export function Map({ onPointCountChange }: MapProps) {
             </p>
             <p className="text-xs text-muted-foreground">
               With Coordinates: <span className="font-semibold text-foreground">
-                {apiData.filter(r => r.GeoData?.coordinates).length}
+                {apiData.filter(r => r.GeoData && typeof r.GeoData === 'string' && r.GeoData.includes(';')).length}
               </span>
             </p>
           </div>
