@@ -561,28 +561,30 @@ export function Map({ onPointCountChange }: MapProps) {
                   Selected: <span className="font-semibold text-foreground">{selectedMaterials.size}</span> of <span className="font-semibold text-foreground">{materials.length}</span>
                 </p>
               </div>
-              <ScrollArea className="flex-1 h-[400px]">
-                <div className="px-4 py-3 space-y-3">
-                  {materials.map(material => (
-                    <div key={material} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`material-${material}`}
-                        checked={selectedMaterials.has(material)}
-                        onCheckedChange={() => handleMaterialToggle(material)}
-                      />
-                      <Label
-                        htmlFor={`material-${material}`}
-                        className="text-sm font-normal cursor-pointer flex-1"
-                      >
-                        {material}
-                      </Label>
-                      <span className="text-xs text-muted-foreground font-medium">
-                        {materialCounts[material] || 0}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
+              <div className="flex-1 overflow-hidden">
+                <ScrollArea className="h-full">
+                  <div className="px-4 py-3 space-y-3">
+                    {materials.map(material => (
+                      <div key={material} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`material-${material}`}
+                          checked={selectedMaterials.has(material)}
+                          onCheckedChange={() => handleMaterialToggle(material)}
+                        />
+                        <Label
+                          htmlFor={`material-${material}`}
+                          className="text-sm font-normal cursor-pointer flex-1"
+                        >
+                          {material}
+                        </Label>
+                        <span className="text-xs text-muted-foreground font-medium">
+                          {materialCounts[material] || 0}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
             </TabsContent>
             
             <TabsContent value="morphology" className="flex-1 flex flex-col overflow-hidden mt-0">
@@ -591,28 +593,30 @@ export function Map({ onPointCountChange }: MapProps) {
                   Selected: <span className="font-semibold text-foreground">{selectedMorphologies.size}</span> of <span className="font-semibold text-foreground">{morphologies.length}</span>
                 </p>
               </div>
-              <ScrollArea className="flex-1 h-[400px]">
-                <div className="px-4 py-3 space-y-3">
-                  {morphologies.map(morphology => (
-                    <div key={morphology} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`morphology-${morphology}`}
-                        checked={selectedMorphologies.has(morphology)}
-                        onCheckedChange={() => handleMorphologyToggle(morphology)}
-                      />
-                      <Label
-                        htmlFor={`morphology-${morphology}`}
-                        className="text-sm font-normal cursor-pointer flex-1"
-                      >
-                        {morphology}
-                      </Label>
-                      <span className="text-xs text-muted-foreground font-medium">
-                        {morphologyCounts[morphology] || 0}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
+              <div className="flex-1 overflow-hidden">
+                <ScrollArea className="h-full">
+                  <div className="px-4 py-3 space-y-3">
+                    {morphologies.map(morphology => (
+                      <div key={morphology} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`morphology-${morphology}`}
+                          checked={selectedMorphologies.has(morphology)}
+                          onCheckedChange={() => handleMorphologyToggle(morphology)}
+                        />
+                        <Label
+                          htmlFor={`morphology-${morphology}`}
+                          className="text-sm font-normal cursor-pointer flex-1"
+                        >
+                          {morphology}
+                        </Label>
+                        <span className="text-xs text-muted-foreground font-medium">
+                          {morphologyCounts[morphology] || 0}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
             </TabsContent>
             
             <TabsContent value="game" className="flex-1 flex flex-col overflow-hidden mt-0">
@@ -621,28 +625,30 @@ export function Map({ onPointCountChange }: MapProps) {
                   Selected: <span className="font-semibold text-foreground">{selectedGames.size}</span> of <span className="font-semibold text-foreground">{games.length}</span>
                 </p>
               </div>
-              <ScrollArea className="flex-1 h-[400px]">
-                <div className="px-4 py-3 space-y-3">
-                  {games.map(game => (
-                    <div key={game} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`game-${game}`}
-                        checked={selectedGames.has(game)}
-                        onCheckedChange={() => handleGameToggle(game)}
-                      />
-                      <Label
-                        htmlFor={`game-${game}`}
-                        className="text-sm font-normal cursor-pointer flex-1"
-                      >
-                        {game}
-                      </Label>
-                      <span className="text-xs text-muted-foreground font-medium">
-                        {gameCounts[game] || 0}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
+              <div className="flex-1 overflow-hidden">
+                <ScrollArea className="h-full">
+                  <div className="px-4 py-3 space-y-3">
+                    {games.map(game => (
+                      <div key={game} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`game-${game}`}
+                          checked={selectedGames.has(game)}
+                          onCheckedChange={() => handleGameToggle(game)}
+                        />
+                        <Label
+                          htmlFor={`game-${game}`}
+                          className="text-sm font-normal cursor-pointer flex-1"
+                        >
+                          {game}
+                        </Label>
+                        <span className="text-xs text-muted-foreground font-medium">
+                          {gameCounts[game] || 0}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
             </TabsContent>
             
             <TabsContent value="conservation" className="flex-1 flex flex-col overflow-hidden mt-0">
@@ -651,28 +657,30 @@ export function Map({ onPointCountChange }: MapProps) {
                   Selected: <span className="font-semibold text-foreground">{selectedConservationStates.size}</span> of <span className="font-semibold text-foreground">{conservationStates.length}</span>
                 </p>
               </div>
-              <ScrollArea className="flex-1 h-[400px]">
-                <div className="px-4 py-3 space-y-3">
-                  {conservationStates.map(state => (
-                    <div key={state} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`conservation-${state}`}
-                        checked={selectedConservationStates.has(state)}
-                        onCheckedChange={() => handleConservationStateToggle(state)}
-                      />
-                      <Label
-                        htmlFor={`conservation-${state}`}
-                        className="text-sm font-normal cursor-pointer flex-1"
-                      >
-                        {state}
-                      </Label>
-                      <span className="text-xs text-muted-foreground font-medium">
-                        {conservationStateCounts[state] || 0}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
+              <div className="flex-1 overflow-hidden">
+                <ScrollArea className="h-full">
+                  <div className="px-4 py-3 space-y-3">
+                    {conservationStates.map(state => (
+                      <div key={state} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`conservation-${state}`}
+                          checked={selectedConservationStates.has(state)}
+                          onCheckedChange={() => handleConservationStateToggle(state)}
+                        />
+                        <Label
+                          htmlFor={`conservation-${state}`}
+                          className="text-sm font-normal cursor-pointer flex-1"
+                        >
+                          {state}
+                        </Label>
+                        <span className="text-xs text-muted-foreground font-medium">
+                          {conservationStateCounts[state] || 0}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
             </TabsContent>
             
             <TabsContent value="typology" className="flex-1 flex flex-col overflow-hidden mt-0">
@@ -681,28 +689,30 @@ export function Map({ onPointCountChange }: MapProps) {
                   Selected: <span className="font-semibold text-foreground">{selectedTypologies.size}</span> of <span className="font-semibold text-foreground">{typologies.length}</span>
                 </p>
               </div>
-              <ScrollArea className="flex-1 h-[400px]">
-                <div className="px-4 py-3 space-y-3">
-                  {typologies.map(typology => (
-                    <div key={typology} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`typology-${typology}`}
-                        checked={selectedTypologies.has(typology)}
-                        onCheckedChange={() => handleTypologyToggle(typology)}
-                      />
-                      <Label
-                        htmlFor={`typology-${typology}`}
-                        className="text-sm font-normal cursor-pointer flex-1"
-                      >
-                        {typology}
-                      </Label>
-                      <span className="text-xs text-muted-foreground font-medium">
-                        {typologyCounts[typology] || 0}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
+              <div className="flex-1 overflow-hidden">
+                <ScrollArea className="h-full">
+                  <div className="px-4 py-3 space-y-3">
+                    {typologies.map(typology => (
+                      <div key={typology} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`typology-${typology}`}
+                          checked={selectedTypologies.has(typology)}
+                          onCheckedChange={() => handleTypologyToggle(typology)}
+                        />
+                        <Label
+                          htmlFor={`typology-${typology}`}
+                          className="text-sm font-normal cursor-pointer flex-1"
+                        >
+                          {typology}
+                        </Label>
+                        <span className="text-xs text-muted-foreground font-medium">
+                          {typologyCounts[typology] || 0}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
             </TabsContent>
           </Tabs>
         </div>
