@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Map } from './components/Map'
 import { MapTrifold, MapPin } from '@phosphor-icons/react'
 import { Toaster } from '@/components/ui/sonner'
+import { AboutDialog } from './components/AboutDialog'
 import unifrLogo from '@/assets/images/unifr-logo.jpg'
 import { config } from './config'
 
@@ -39,14 +40,18 @@ function App() {
             </div>
           </div>
           
-          {pointCount !== null && (
-            <div className="flex items-center gap-2 bg-muted px-4 py-2 rounded-lg">
-              <MapPin size={20} weight="fill" className="text-primary" />
-              <span className="text-sm font-medium text-foreground">
-                {pointCount.toLocaleString()} {pointCount === 1 ? 'point' : 'points'}
-              </span>
-            </div>
-          )}
+          <div className="flex items-center gap-3">
+            <AboutDialog />
+            
+            {pointCount !== null && (
+              <div className="flex items-center gap-2 bg-muted px-4 py-2 rounded-lg">
+                <MapPin size={20} weight="fill" className="text-primary" />
+                <span className="text-sm font-medium text-foreground">
+                  {pointCount.toLocaleString()} {pointCount === 1 ? 'point' : 'points'}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       </header>
       
