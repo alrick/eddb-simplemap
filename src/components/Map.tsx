@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
 import 'leaflet.markercluster'
-import { Bug, X, Funnel } from '@phosphor-icons/react'
+import { Bug, X, Funnel, ArrowCounterClockwise } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
@@ -502,6 +502,14 @@ export function Map({ onPointCountChange }: MapProps) {
     })
   }
 
+  const handleResetAllFilters = () => {
+    setSelectedMaterials(new Set(materials))
+    setSelectedMorphologies(new Set(morphologies))
+    setSelectedGames(new Set(games))
+    setSelectedConservationStates(new Set(conservationStates))
+    setSelectedTypologies(new Set(typologies))
+  }
+
   return (
     <div className="relative w-full h-full">
       <div 
@@ -538,14 +546,25 @@ export function Map({ onPointCountChange }: MapProps) {
               <Funnel size={20} weight="fill" className="text-primary" />
               <h3 className="font-semibold text-sm">Filters</h3>
             </div>
-            <Button
-              onClick={() => setShowFilter(false)}
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0"
-            >
-              <X size={18} />
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={handleResetAllFilters}
+                variant="ghost"
+                size="sm"
+                className="h-8 text-xs"
+              >
+                <ArrowCounterClockwise size={16} className="mr-1" />
+                Reset all
+              </Button>
+              <Button
+                onClick={() => setShowFilter(false)}
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+              >
+                <X size={18} />
+              </Button>
+            </div>
           </div>
 
           <Tabs defaultValue="material" className="w-full">
