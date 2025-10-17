@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Map } from './components/Map'
 import { MapTrifold, MapPin } from '@phosphor-icons/react'
-import { UnifrLogo } from './components/UnifrLogo'
 
 function App() {
   const [pointCount, setPointCount] = useState<number | null>(null)
@@ -12,7 +11,11 @@ function App() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3 pr-4 border-r border-border">
-              <UnifrLogo size={36} className="text-foreground" />
+              <img 
+                src="https://www.unifr.ch/design/documents/favicon/android-chrome-192x192.png" 
+                alt="UniFr Logo" 
+                className="w-9 h-9 object-contain"
+              />
               <MapTrifold size={32} weight="duotone" className="text-primary" />
             </div>
             <div>
