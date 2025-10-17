@@ -244,8 +244,23 @@ export function Map({ onPointCountChange }: MapProps) {
                 
                 const title = record.Title || 'Untitled'
                 
+                const locations = [
+                  record.Location1,
+                  record.Location2,
+                  record.Location3
+                ].filter(loc => loc !== null && loc !== undefined && loc !== '').join(', ')
+                
                 const popupContent = Object.entries(record)
-                  .filter(([key]) => key !== 'GeoData' && key !== 'Id' && key !== 'Title' && key !== 'CreatedAt' && key !== 'UpdatedAt')
+                  .filter(([key]) => 
+                    key !== 'GeoData' && 
+                    key !== 'Id' && 
+                    key !== 'Title' && 
+                    key !== 'CreatedAt' && 
+                    key !== 'UpdatedAt' &&
+                    key !== 'Location1' &&
+                    key !== 'Location2' &&
+                    key !== 'Location3'
+                  )
                   .map(([key, value]) => {
                     if (value !== null && value !== undefined && value !== '') {
                       return `<p><strong>${key}:</strong> ${value}</p>`
@@ -254,8 +269,10 @@ export function Map({ onPointCountChange }: MapProps) {
                   })
                   .filter(Boolean)
                   .join('')
+                
+                const locationsHtml = locations ? `<p><strong>Locations:</strong> ${locations}</p>` : ''
 
-                marker.bindPopup(`<div><h3>${title}</h3>${popupContent}</div>`)
+                marker.bindPopup(`<div><h3>${title}</h3>${locationsHtml}${popupContent}</div>`)
 
                 markers.addLayer(marker)
                 validPoints++
@@ -375,8 +392,23 @@ export function Map({ onPointCountChange }: MapProps) {
             
             const title = record.Title || 'Untitled'
             
+            const locations = [
+              record.Location1,
+              record.Location2,
+              record.Location3
+            ].filter(loc => loc !== null && loc !== undefined && loc !== '').join(', ')
+            
             const popupContent = Object.entries(record)
-              .filter(([key]) => key !== 'GeoData' && key !== 'Id' && key !== 'Title' && key !== 'CreatedAt' && key !== 'UpdatedAt')
+              .filter(([key]) => 
+                key !== 'GeoData' && 
+                key !== 'Id' && 
+                key !== 'Title' && 
+                key !== 'CreatedAt' && 
+                key !== 'UpdatedAt' &&
+                key !== 'Location1' &&
+                key !== 'Location2' &&
+                key !== 'Location3'
+              )
               .map(([key, value]) => {
                 if (value !== null && value !== undefined && value !== '') {
                   return `<p><strong>${key}:</strong> ${value}</p>`
@@ -385,8 +417,10 @@ export function Map({ onPointCountChange }: MapProps) {
               })
               .filter(Boolean)
               .join('')
+            
+            const locationsHtml = locations ? `<p><strong>Locations:</strong> ${locations}</p>` : ''
 
-            marker.bindPopup(`<div><h3>${title}</h3>${popupContent}</div>`)
+            marker.bindPopup(`<div><h3>${title}</h3>${locationsHtml}${popupContent}</div>`)
 
             markerClusterGroup.current!.addLayer(marker)
             validPoints++
