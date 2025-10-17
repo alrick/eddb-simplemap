@@ -8,6 +8,7 @@ import { config } from '@/config'
 export function AboutDialog() {
   const [content, setContent] = useState<string>('')
   const [loading, setLoading] = useState(true)
+  const [imageSrc, setImageSrc] = useState<string | null>(null)
 
   useEffect(() => {
     const loadAboutContent = async () => {
@@ -24,7 +25,22 @@ export function AboutDialog() {
       }
     }
 
+    const loadAboutImage = async () => {
+      try {
+        const image = await import(`../about/${config.appName.toLowerCase()}.png`)
+        setImageSrc(image.default)
+      } catch (error) {
+        try {
+          const image = await import(`../assets/images/${config.appName.toLowerCase()}.png`)
+          setImageSrc(image.default)
+        } catch (fallbackError) {
+          console.log(`No image found for ${config.appName}`)
+        }
+      }
+    }
+
     loadAboutContent()
+    loadAboutImage()
   }, [])
 
   return (
@@ -45,10 +61,21 @@ export function AboutDialog() {
             <div className="inline-block h-6 w-6 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent"></div>
           </div>
         ) : (
-          <div 
-            className="prose prose-sm max-w-none dark:prose-invert"
-            dangerouslySetInnerHTML={{ __html: content }}
-          />
+          <div className="space-y-6">
+            {imageSrc && (
+              <div className="flex justify-center">
+                <img 
+                  src={imageSrc} 
+                  alt={`${config.appName} logo`}
+                  className="max-w-full h-auto rounded-lg"
+                />
+              </div>
+            )}
+            <div 
+              className="prose prose-sm max-w-none dark:prose-invert"
+              dangerouslySetInnerHTML={{ __html: content }}
+            />
+          </div>
         )}
       </DialogContent>
     </Dialog>
