@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Info } from '@phosphor-icons/react'
 import { marked } from 'marked'
@@ -39,22 +39,17 @@ export function AboutDialog() {
           About
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>About {config.appName}</DialogTitle>
-        </DialogHeader>
-        <div className="pt-4">
-          {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="inline-block h-6 w-6 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent"></div>
-            </div>
-          ) : (
-            <div 
-              className="prose prose-sm max-w-none dark:prose-invert"
-              dangerouslySetInnerHTML={{ __html: content }}
-            />
-          )}
-        </div>
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+        {loading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="inline-block h-6 w-6 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent"></div>
+          </div>
+        ) : (
+          <div 
+            className="prose prose-sm max-w-none dark:prose-invert"
+            dangerouslySetInnerHTML={{ __html: content }}
+          />
+        )}
       </DialogContent>
     </Dialog>
   )

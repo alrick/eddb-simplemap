@@ -1,18 +1,10 @@
 # About Ludus
 
-Ludus is a geographic visualization tool for exploring archaeological data from the EDDB service.
+The Ludus database is an important collaborative tool promoting the renewal of research on ancient play culture as a mirror and operator of past societies. The aim is to bring together all the ancient game boards, from ancient Egypt to the end of the Western Roman Empire (c.500 AD) preserved in various media: engraved on stone floors, in wood, in stone, in terracotta. The database generates a GIS topographic map that can be queried according to the type of game, the period, the location, the material, thus offering a new vision of the distrubution and the dissemination of games in the ancient world.
 
-## Features
+This database is part of the <a href="https://locusludi.ch">Locus Ludi</a> project that has received funding from the European Research Council (ERC) under the European Union’s Horizon 2020 research and innovation programme (Grant agreement No. 741520)
 
-- **Interactive Map**: Browse archaeological sites with detailed geographic information
-- **Advanced Filtering**: Filter points by material, morphology, game type, conservation state, and typology
-- **Image Gallery**: View associated images for each archaeological point
-- **Direct Access**: Open specific points using their ID
 
-## Data Source
+## Data source
 
 All data is sourced from the [EDDB service](https://eddb.unifr.ch) at the University of Fribourg.
-
-## Technology
-
-Built with modern web technologies including React, TypeScript, Leaflet for mapping, and Tailwind CSS for styling.
