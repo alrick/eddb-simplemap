@@ -11,9 +11,14 @@ import { Input } from '@/components/ui/input'
 import { marked } from 'marked'
 import { toast } from 'sonner'
 
+interface ImageData {
+  signedPath?: string
+}
+
 interface ApiRecord {
   Id: number
   GeoData?: string
+  Image?: ImageData[]
   [key: string]: any
 }
 
@@ -26,6 +31,26 @@ interface ApiResponse {
 
 interface MapProps {
   onPointCountChange?: (count: number) => void
+}
+
+const imageCache = new globalThis.Map<string, string>()
+
+async function cacheImage(signedPath: string): Promise<string> {
+  if (imageCache.has(signedPath)) {
+    return imageCache.get(signedPath)!
+  }
+
+  try {
+    const fullUrl = `https://eddb.unifr.ch/noco/${signedPath}`
+    const response = await fetch(fullUrl)
+    const blob = await response.blob()
+    const objectUrl = URL.createObjectURL(blob)
+    imageCache.set(signedPath, objectUrl)
+    return objectUrl
+  } catch (error) {
+    console.error('Error caching image:', error)
+    return `https://eddb.unifr.ch/noco/${signedPath}`
+  }
 }
 
 function parseMarkdown(text: string): string {
@@ -275,7 +300,8 @@ export function Map({ onPointCountChange }: MapProps) {
                     key !== 'UpdatedAt' &&
                     key !== 'Location1' &&
                     key !== 'Location2' &&
-                    key !== 'Location3'
+                    key !== 'Location3' &&
+                    key !== 'Image'
                   )
                   .map(([key, value]) => {
                     if (value !== null && value !== undefined && value !== '') {
@@ -292,8 +318,60 @@ export function Map({ onPointCountChange }: MapProps) {
                   .join('')
                 
                 const locationsHtml = locations ? `<p><strong>Locations:</strong> ${locations}</p>` : ''
+                
+                const popupElement = document.createElement('div')
+                popupElement.innerHTML = `<div><h3>${title}</h3>${locationsHtml}${popupContent}</div>`
+                
+                if (record.Image && Array.isArray(record.Image) && record.Image.length > 0) {
+                  const imageContainer = document.createElement('div')
+                  imageContainer.style.marginTop = '12px'
+                  imageContainer.style.display = 'flex'
+                  imageContainer.style.gap = '8px'
+                  imageContainer.style.flexWrap = 'wrap'
+                  
+                  record.Image.forEach((img: ImageData) => {
+                    if (img.signedPath) {
+                      const imgWrapper = document.createElement('div')
+                      imgWrapper.style.width = '120px'
+                      imgWrapper.style.height = '120px'
+                      imgWrapper.style.borderRadius = 'var(--radius)'
+                      imgWrapper.style.overflow = 'hidden'
+                      imgWrapper.style.cursor = 'pointer'
+                      imgWrapper.style.border = '2px solid oklch(0.88 0.01 250)'
+                      imgWrapper.style.transition = 'transform 0.2s'
+                      
+                      imgWrapper.addEventListener('mouseenter', () => {
+                        imgWrapper.style.transform = 'scale(1.05)'
+                      })
+                      imgWrapper.addEventListener('mouseleave', () => {
+                        imgWrapper.style.transform = 'scale(1)'
+                      })
+                      
+                      const imgElement = document.createElement('img')
+                      imgElement.style.width = '100%'
+                      imgElement.style.height = '100%'
+                      imgElement.style.objectFit = 'cover'
+                      imgElement.alt = 'Point image'
+                      
+                      cacheImage(img.signedPath).then(url => {
+                        imgElement.src = url
+                      })
+                      
+                      imgWrapper.addEventListener('click', () => {
+                        cacheImage(img.signedPath!).then(url => {
+                          window.open(url, '_blank')
+                        })
+                      })
+                      
+                      imgWrapper.appendChild(imgElement)
+                      imageContainer.appendChild(imgWrapper)
+                    }
+                  })
+                  
+                  popupElement.appendChild(imageContainer)
+                }
 
-                marker.bindPopup(`<div><h3>${title}</h3>${locationsHtml}${popupContent}</div>`)
+                marker.bindPopup(popupElement)
 
                 markers.addLayer(marker)
                 markerMapRef.current.set(record.Id, marker)
@@ -430,7 +508,8 @@ export function Map({ onPointCountChange }: MapProps) {
                 key !== 'UpdatedAt' &&
                 key !== 'Location1' &&
                 key !== 'Location2' &&
-                key !== 'Location3'
+                key !== 'Location3' &&
+                key !== 'Image'
               )
               .map(([key, value]) => {
                 if (value !== null && value !== undefined && value !== '') {
@@ -447,8 +526,60 @@ export function Map({ onPointCountChange }: MapProps) {
               .join('')
             
             const locationsHtml = locations ? `<p><strong>Locations:</strong> ${locations}</p>` : ''
+            
+            const popupElement = document.createElement('div')
+            popupElement.innerHTML = `<div><h3>${title}</h3>${locationsHtml}${popupContent}</div>`
+            
+            if (record.Image && Array.isArray(record.Image) && record.Image.length > 0) {
+              const imageContainer = document.createElement('div')
+              imageContainer.style.marginTop = '12px'
+              imageContainer.style.display = 'flex'
+              imageContainer.style.gap = '8px'
+              imageContainer.style.flexWrap = 'wrap'
+              
+              record.Image.forEach((img: ImageData) => {
+                if (img.signedPath) {
+                  const imgWrapper = document.createElement('div')
+                  imgWrapper.style.width = '120px'
+                  imgWrapper.style.height = '120px'
+                  imgWrapper.style.borderRadius = 'var(--radius)'
+                  imgWrapper.style.overflow = 'hidden'
+                  imgWrapper.style.cursor = 'pointer'
+                  imgWrapper.style.border = '2px solid oklch(0.88 0.01 250)'
+                  imgWrapper.style.transition = 'transform 0.2s'
+                  
+                  imgWrapper.addEventListener('mouseenter', () => {
+                    imgWrapper.style.transform = 'scale(1.05)'
+                  })
+                  imgWrapper.addEventListener('mouseleave', () => {
+                    imgWrapper.style.transform = 'scale(1)'
+                  })
+                  
+                  const imgElement = document.createElement('img')
+                  imgElement.style.width = '100%'
+                  imgElement.style.height = '100%'
+                  imgElement.style.objectFit = 'cover'
+                  imgElement.alt = 'Point image'
+                  
+                  cacheImage(img.signedPath).then(url => {
+                    imgElement.src = url
+                  })
+                  
+                  imgWrapper.addEventListener('click', () => {
+                    cacheImage(img.signedPath!).then(url => {
+                      window.open(url, '_blank')
+                    })
+                  })
+                  
+                  imgWrapper.appendChild(imgElement)
+                  imageContainer.appendChild(imgWrapper)
+                }
+              })
+              
+              popupElement.appendChild(imageContainer)
+            }
 
-            marker.bindPopup(`<div><h3>${title}</h3>${locationsHtml}${popupContent}</div>`)
+            marker.bindPopup(popupElement)
 
             markerClusterGroup.current!.addLayer(marker)
             markerMapRef.current.set(record.Id, marker)
