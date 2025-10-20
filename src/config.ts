@@ -1,22 +1,25 @@
-export interface FilterConfig {
+export interface StandardFilterConfig {
+  type: 'standard'
   field: string
   label: string
-  enabled: boolean
+  shortLabel?: string
 }
+
+export interface BooleanFilterConfig {
+  type: 'boolean'
+  field: string
+  label: string
+  checkFunction?: (record: any) => boolean
+}
+
+export type FilterConfig = StandardFilterConfig | BooleanFilterConfig
 
 export interface AppConfig {
   appName: string
   apiUrl: string
   apiToken: string
   geoDataField: string
-  filters: {
-    material: FilterConfig
-    morphology: FilterConfig
-    game: FilterConfig
-    conservationState: FilterConfig
-    typology: FilterConfig
-    hasImages: FilterConfig
-  }
+  filters: FilterConfig[]
   debug: {
     enabled: boolean
     showConsoleLog: boolean
@@ -37,38 +40,44 @@ export const config: AppConfig = {
   
   geoDataField: 'GeoData',
   
-  filters: {
-    material: {
+  filters: [
+    {
+      type: 'standard',
       field: 'Material',
-      label: 'Material',
-      enabled: true
+      label: 'Material'
     },
-    morphology: {
+    {
+      type: 'standard',
       field: 'Morphology',
       label: 'Morphology',
-      enabled: true
+      shortLabel: 'Morph.'
     },
-    game: {
+    {
+      type: 'standard',
       field: 'Game',
-      label: 'Game',
-      enabled: true
+      label: 'Game'
     },
-    conservationState: {
+    {
+      type: 'standard',
       field: 'ConservationState',
       label: 'Conservation State',
-      enabled: true
+      shortLabel: 'State'
     },
-    typology: {
+    {
+      type: 'standard',
       field: 'Typology',
       label: 'Typology',
-      enabled: true
+      shortLabel: 'Type'
     },
-    hasImages: {
+    {
+      type: 'boolean',
       field: 'Image',
       label: 'Has Images',
-      enabled: true
+      checkFunction: (record: any) => {
+        return record.Image && Array.isArray(record.Image) && record.Image.length > 0 && record.Image.some((img: any) => img.signedPath)
+      }
     }
-  },
+  ],
   
   debug: {
     enabled: true,

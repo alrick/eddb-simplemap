@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useMemo } from 'react'
 import L from 'leaflet'
 import 'leaflet.markercluster'
 import { Bug, X, Funnel, ArrowCounterClockwise, Crosshair, Image } from '@phosphor-icons/react'
@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { marked } from 'marked'
 import { toast } from 'sonner'
-import { config } from '@/config'
+import { config, type StandardFilterConfig, type BooleanFilterConfig } from '@/config'
 
 interface ImageData {
   signedPath?: string
@@ -32,6 +32,12 @@ interface ApiResponse {
 
 interface MapProps {
   onPointCountChange?: (count: number) => void
+}
+
+interface FilterState {
+  values: string[]
+  counts: Record<string, number>
+  selected: Set<string>
 }
 
 const imageCache = new globalThis.Map<string, string>()
@@ -73,26 +79,17 @@ export function Map({ onPointCountChange }: MapProps) {
   const [apiData, setApiData] = useState<ApiRecord[] | null>(null)
   const [showDebug, setShowDebug] = useState(false)
   const [showFilter, setShowFilter] = useState(false)
-  const [materials, setMaterials] = useState<string[]>([])
-  const [materialCounts, setMaterialCounts] = useState<Record<string, number>>({})
-  const [selectedMaterials, setSelectedMaterials] = useState<Set<string>>(new Set())
-  const [morphologies, setMorphologies] = useState<string[]>([])
-  const [morphologyCounts, setMorphologyCounts] = useState<Record<string, number>>({})
-  const [selectedMorphologies, setSelectedMorphologies] = useState<Set<string>>(new Set())
-  const [games, setGames] = useState<string[]>([])
-  const [gameCounts, setGameCounts] = useState<Record<string, number>>({})
-  const [selectedGames, setSelectedGames] = useState<Set<string>>(new Set())
-  const [conservationStates, setConservationStates] = useState<string[]>([])
-  const [conservationStateCounts, setConservationStateCounts] = useState<Record<string, number>>({})
-  const [selectedConservationStates, setSelectedConservationStates] = useState<Set<string>>(new Set())
-  const [typologies, setTypologies] = useState<string[]>([])
-  const [typologyCounts, setTypologyCounts] = useState<Record<string, number>>({})
-  const [selectedTypologies, setSelectedTypologies] = useState<Set<string>>(new Set())
-  const [filterHasImages, setFilterHasImages] = useState(false)
+  
+  const [filterStates, setFilterStates] = useState<Record<string, FilterState>>({})
+  const [booleanFilterStates, setBooleanFilterStates] = useState<Record<string, boolean>>({})
+  
   const markerClusterGroup = useRef<L.MarkerClusterGroup | null>(null)
   const markerMapRef = useRef(new globalThis.Map<number, L.Marker>())
   const [showOpenById, setShowOpenById] = useState(false)
   const [inputId, setInputId] = useState('')
+
+  const standardFilters = useMemo(() => config.filters.filter(f => f.type === 'standard') as StandardFilterConfig[], [])
+  const booleanFilters = useMemo(() => config.filters.filter(f => f.type === 'boolean') as BooleanFilterConfig[], [])
 
   useEffect(() => {
     if (!mapContainer.current || mapInstance.current) return
@@ -145,98 +142,49 @@ export function Map({ onPointCountChange }: MapProps) {
 
         setApiData(allRecords)
         
-        const materialCountMap: Record<string, number> = {}
-        const morphologyCountMap: Record<string, number> = {}
-        const gameCountMap: Record<string, number> = {}
-        const conservationStateCountMap: Record<string, number> = {}
-        const typologyCountMap: Record<string, number> = {}
+        const newFilterStates: Record<string, FilterState> = {}
         
-        allRecords.forEach(record => {
-          if (record[config.geoDataField] && typeof record[config.geoDataField] === 'string') {
-            const parts = record[config.geoDataField].split(';')
-            if (parts.length === 2) {
-              const lat = parseFloat(parts[0])
-              const lng = parseFloat(parts[1])
-              
-              if (!isNaN(lat) && !isNaN(lng)) {
-                const material = typeof record.Material === 'string' && record.Material.trim() !== '' 
-                  ? record.Material 
-                  : 'Unknown'
-                materialCountMap[material] = (materialCountMap[material] || 0) + 1
+        standardFilters.forEach(filter => {
+          const countMap: Record<string, number> = {}
+          
+          allRecords.forEach(record => {
+            if (record[config.geoDataField] && typeof record[config.geoDataField] === 'string') {
+              const parts = record[config.geoDataField].split(';')
+              if (parts.length === 2) {
+                const lat = parseFloat(parts[0])
+                const lng = parseFloat(parts[1])
                 
-                const morphology = typeof record.Morphology === 'string' && record.Morphology.trim() !== '' 
-                  ? record.Morphology 
-                  : 'Unknown'
-                morphologyCountMap[morphology] = (morphologyCountMap[morphology] || 0) + 1
-                
-                const game = typeof record.Game === 'string' && record.Game.trim() !== '' 
-                  ? record.Game 
-                  : 'Unknown'
-                gameCountMap[game] = (gameCountMap[game] || 0) + 1
-                
-                const conservationState = typeof record.ConservationState === 'string' && record.ConservationState.trim() !== '' 
-                  ? record.ConservationState 
-                  : 'Unknown'
-                conservationStateCountMap[conservationState] = (conservationStateCountMap[conservationState] || 0) + 1
-                
-                const typology = typeof record.Typology === 'string' && record.Typology.trim() !== '' 
-                  ? record.Typology 
-                  : 'Unknown'
-                typologyCountMap[typology] = (typologyCountMap[typology] || 0) + 1
+                if (!isNaN(lat) && !isNaN(lng)) {
+                  const value = typeof record[filter.field] === 'string' && record[filter.field].trim() !== '' 
+                    ? record[filter.field] 
+                    : 'Unknown'
+                  countMap[value] = (countMap[value] || 0) + 1
+                }
               }
             }
+          })
+          
+          const uniqueValues = Object.keys(countMap)
+            .filter(v => v !== 'Unknown')
+            .sort()
+          const valuesWithUnknown = countMap['Unknown'] 
+            ? [...uniqueValues, 'Unknown']
+            : uniqueValues
+          
+          newFilterStates[filter.field] = {
+            values: valuesWithUnknown,
+            counts: countMap,
+            selected: new Set(valuesWithUnknown)
           }
         })
         
-        const uniqueMaterials = Object.keys(materialCountMap)
-          .filter(m => m !== 'Unknown')
-          .sort()
-        const materialsWithUnknown = materialCountMap['Unknown'] 
-          ? [...uniqueMaterials, 'Unknown']
-          : uniqueMaterials
-        setMaterials(materialsWithUnknown)
-        setMaterialCounts(materialCountMap)
-        setSelectedMaterials(new Set(materialsWithUnknown))
+        setFilterStates(newFilterStates)
         
-        const uniqueMorphologies = Object.keys(morphologyCountMap)
-          .filter(m => m !== 'Unknown')
-          .sort()
-        const morphologiesWithUnknown = morphologyCountMap['Unknown'] 
-          ? [...uniqueMorphologies, 'Unknown']
-          : uniqueMorphologies
-        setMorphologies(morphologiesWithUnknown)
-        setMorphologyCounts(morphologyCountMap)
-        setSelectedMorphologies(new Set(morphologiesWithUnknown))
-        
-        const uniqueGames = Object.keys(gameCountMap)
-          .filter(g => g !== 'Unknown')
-          .sort()
-        const gamesWithUnknown = gameCountMap['Unknown'] 
-          ? [...uniqueGames, 'Unknown']
-          : uniqueGames
-        setGames(gamesWithUnknown)
-        setGameCounts(gameCountMap)
-        setSelectedGames(new Set(gamesWithUnknown))
-        
-        const uniqueConservationStates = Object.keys(conservationStateCountMap)
-          .filter(c => c !== 'Unknown')
-          .sort()
-        const conservationStatesWithUnknown = conservationStateCountMap['Unknown'] 
-          ? [...uniqueConservationStates, 'Unknown']
-          : uniqueConservationStates
-        setConservationStates(conservationStatesWithUnknown)
-        setConservationStateCounts(conservationStateCountMap)
-        setSelectedConservationStates(new Set(conservationStatesWithUnknown))
-        
-        const uniqueTypologies = Object.keys(typologyCountMap)
-          .filter(t => t !== 'Unknown')
-          .sort()
-        const typologiesWithUnknown = typologyCountMap['Unknown'] 
-          ? [...uniqueTypologies, 'Unknown']
-          : uniqueTypologies
-        setTypologies(typologiesWithUnknown)
-        setTypologyCounts(typologyCountMap)
-        setSelectedTypologies(new Set(typologiesWithUnknown))
+        const newBooleanFilterStates: Record<string, boolean> = {}
+        booleanFilters.forEach(filter => {
+          newBooleanFilterStates[filter.field] = false
+        })
+        setBooleanFilterStates(newBooleanFilterStates)
         
         const markers = L.markerClusterGroup({
           chunkedLoading: true,
@@ -450,60 +398,22 @@ export function Map({ onPointCountChange }: MapProps) {
 
     let validPoints = 0
     apiData.forEach(record => {
-      if (config.filters.material.enabled) {
-        const recordMaterial = typeof record[config.filters.material.field] === 'string' && record[config.filters.material.field].trim() !== '' 
-          ? record[config.filters.material.field] 
+      for (const filter of standardFilters) {
+        const recordValue = typeof record[filter.field] === 'string' && record[filter.field].trim() !== '' 
+          ? record[filter.field] 
           : 'Unknown'
         
-        if (!selectedMaterials.has(recordMaterial)) {
+        if (!filterStates[filter.field]?.selected.has(recordValue)) {
           return
         }
       }
       
-      if (config.filters.morphology.enabled) {
-        const recordMorphology = typeof record[config.filters.morphology.field] === 'string' && record[config.filters.morphology.field].trim() !== '' 
-          ? record[config.filters.morphology.field] 
-          : 'Unknown'
-        
-        if (!selectedMorphologies.has(recordMorphology)) {
-          return
-        }
-      }
-      
-      if (config.filters.game.enabled) {
-        const recordGame = typeof record[config.filters.game.field] === 'string' && record[config.filters.game.field].trim() !== '' 
-          ? record[config.filters.game.field] 
-          : 'Unknown'
-        
-        if (!selectedGames.has(recordGame)) {
-          return
-        }
-      }
-      
-      if (config.filters.conservationState.enabled) {
-        const recordConservationState = typeof record[config.filters.conservationState.field] === 'string' && record[config.filters.conservationState.field].trim() !== '' 
-          ? record[config.filters.conservationState.field] 
-          : 'Unknown'
-        
-        if (!selectedConservationStates.has(recordConservationState)) {
-          return
-        }
-      }
-      
-      if (config.filters.typology.enabled) {
-        const recordTypology = typeof record[config.filters.typology.field] === 'string' && record[config.filters.typology.field].trim() !== '' 
-          ? record[config.filters.typology.field] 
-          : 'Unknown'
-        
-        if (!selectedTypologies.has(recordTypology)) {
-          return
-        }
-      }
-
-      if (config.filters.hasImages.enabled && filterHasImages) {
-        const hasImages = record.Image && Array.isArray(record.Image) && record.Image.length > 0 && record.Image.some((img: ImageData) => img.signedPath)
-        if (!hasImages) {
-          return
+      for (const filter of booleanFilters) {
+        if (booleanFilterStates[filter.field]) {
+          const checkFunc = filter.checkFunction || ((rec: any) => !!rec[filter.field])
+          if (!checkFunc(record)) {
+            return
+          }
         }
       }
 
@@ -619,115 +529,86 @@ export function Map({ onPointCountChange }: MapProps) {
     }
 
     onPointCountChange?.(validPoints)
-  }, [selectedMaterials, selectedMorphologies, selectedGames, selectedConservationStates, selectedTypologies, filterHasImages, apiData, onPointCountChange])
+  }, [filterStates, booleanFilterStates, apiData, onPointCountChange, standardFilters, booleanFilters])
 
-  const handleMaterialToggle = (material: string) => {
-    setSelectedMaterials(prev => {
-      const next = new Set(prev)
-      if (next.has(material)) {
-        next.delete(material)
+  const handleFilterToggle = (field: string, value: string) => {
+    setFilterStates(prev => {
+      const current = prev[field]
+      if (!current) return prev
+      
+      const newSelected = new Set(current.selected)
+      if (newSelected.has(value)) {
+        newSelected.delete(value)
       } else {
-        next.add(material)
+        newSelected.add(value)
       }
-      return next
+      
+      return {
+        ...prev,
+        [field]: {
+          ...current,
+          selected: newSelected
+        }
+      }
     })
   }
 
-  const handleSelectAllMaterials = () => {
-    setSelectedMaterials(new Set(materials))
-  }
-
-  const handleDeselectAllMaterials = () => {
-    setSelectedMaterials(new Set())
-  }
-
-  const handleSelectAllMorphologies = () => {
-    setSelectedMorphologies(new Set(morphologies))
-  }
-
-  const handleDeselectAllMorphologies = () => {
-    setSelectedMorphologies(new Set())
-  }
-
-  const handleSelectAllGames = () => {
-    setSelectedGames(new Set(games))
-  }
-
-  const handleDeselectAllGames = () => {
-    setSelectedGames(new Set())
-  }
-
-  const handleSelectAllConservationStates = () => {
-    setSelectedConservationStates(new Set(conservationStates))
-  }
-
-  const handleDeselectAllConservationStates = () => {
-    setSelectedConservationStates(new Set())
-  }
-
-  const handleSelectAllTypologies = () => {
-    setSelectedTypologies(new Set(typologies))
-  }
-
-  const handleDeselectAllTypologies = () => {
-    setSelectedTypologies(new Set())
-  }
-  
-  const handleMorphologyToggle = (morphology: string) => {
-    setSelectedMorphologies(prev => {
-      const next = new Set(prev)
-      if (next.has(morphology)) {
-        next.delete(morphology)
-      } else {
-        next.add(morphology)
+  const handleSelectAll = (field: string) => {
+    setFilterStates(prev => {
+      const current = prev[field]
+      if (!current) return prev
+      
+      return {
+        ...prev,
+        [field]: {
+          ...current,
+          selected: new Set(current.values)
+        }
       }
-      return next
     })
   }
-  
-  const handleGameToggle = (game: string) => {
-    setSelectedGames(prev => {
-      const next = new Set(prev)
-      if (next.has(game)) {
-        next.delete(game)
-      } else {
-        next.add(game)
+
+  const handleDeselectAll = (field: string) => {
+    setFilterStates(prev => {
+      const current = prev[field]
+      if (!current) return prev
+      
+      return {
+        ...prev,
+        [field]: {
+          ...current,
+          selected: new Set()
+        }
       }
-      return next
     })
   }
-  
-  const handleConservationStateToggle = (state: string) => {
-    setSelectedConservationStates(prev => {
-      const next = new Set(prev)
-      if (next.has(state)) {
-        next.delete(state)
-      } else {
-        next.add(state)
-      }
-      return next
-    })
-  }
-  
-  const handleTypologyToggle = (typology: string) => {
-    setSelectedTypologies(prev => {
-      const next = new Set(prev)
-      if (next.has(typology)) {
-        next.delete(typology)
-      } else {
-        next.add(typology)
-      }
-      return next
-    })
+
+  const handleBooleanFilterToggle = (field: string) => {
+    setBooleanFilterStates(prev => ({
+      ...prev,
+      [field]: !prev[field]
+    }))
   }
 
   const handleResetAllFilters = () => {
-    setSelectedMaterials(new Set(materials))
-    setSelectedMorphologies(new Set(morphologies))
-    setSelectedGames(new Set(games))
-    setSelectedConservationStates(new Set(conservationStates))
-    setSelectedTypologies(new Set(typologies))
-    setFilterHasImages(false)
+    setFilterStates(prev => {
+      const newState: Record<string, FilterState> = {}
+      Object.keys(prev).forEach(field => {
+        newState[field] = {
+          ...prev[field],
+          selected: new Set(prev[field].values)
+        }
+      })
+      return newState
+    })
+    
+    setBooleanFilterStates(prev => {
+      const newState: Record<string, boolean> = {}
+      Object.keys(prev).forEach(field => {
+        newState[field] = false
+      })
+      return newState
+    })
   }
 
   const handleOpenById = () => {
@@ -755,6 +636,8 @@ export function Map({ onPointCountChange }: MapProps) {
       toast.success(`Opened point with ID: ${id}`)
     }
   }
+
+  const hasFilters = config.filters.length > 0
 
   return (
     <div className="relative w-full h-full">
@@ -816,8 +699,7 @@ export function Map({ onPointCountChange }: MapProps) {
           </DialogContent>
         </Dialog>
 
-        {(config.filters.material.enabled || config.filters.morphology.enabled || config.filters.game.enabled || 
-          config.filters.conservationState.enabled || config.filters.typology.enabled || config.filters.hasImages.enabled) && (
+        {hasFilters && (
           <Button
             onClick={() => setShowFilter(!showFilter)}
             className="shadow-lg"
@@ -842,7 +724,7 @@ export function Map({ onPointCountChange }: MapProps) {
         )}
       </div>
 
-      {showFilter && (
+      {showFilter && hasFilters && (
         <div className="absolute top-16 right-4 w-96 bg-card border border-border rounded-lg shadow-xl z-[1001]" style={{ maxHeight: 'calc(100vh - 10rem)', overflow: 'auto' }}>
           <div className="flex items-center justify-between px-4 py-3 border-b border-border sticky top-0 bg-card z-10">
             <div className="flex items-center gap-2">
@@ -870,284 +752,98 @@ export function Map({ onPointCountChange }: MapProps) {
             </div>
           </div>
 
-          {config.filters.hasImages.enabled && (
-            <div className="px-4 py-3 border-b border-border bg-muted/50">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Image size={18} weight="fill" className="text-primary" />
-                  <Label htmlFor="filter-images" className="text-sm font-medium cursor-pointer">
-                    Only show points with images
-                  </Label>
+          {booleanFilters.length > 0 && (
+            <div className="border-b border-border">
+              {booleanFilters.map(filter => (
+                <div key={filter.field} className="px-4 py-3 border-b border-border bg-muted/50 last:border-b-0">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Image size={18} weight="fill" className="text-primary" />
+                      <Label htmlFor={`filter-${filter.field}`} className="text-sm font-medium cursor-pointer">
+                        {filter.label}
+                      </Label>
+                    </div>
+                    <Switch
+                      id={`filter-${filter.field}`}
+                      checked={booleanFilterStates[filter.field] || false}
+                      onCheckedChange={() => handleBooleanFilterToggle(filter.field)}
+                    />
+                  </div>
                 </div>
-                <Switch
-                  id="filter-images"
-                  checked={filterHasImages}
-                  onCheckedChange={setFilterHasImages}
-                />
-              </div>
+              ))}
             </div>
           )}
 
-          <Tabs defaultValue={
-            config.filters.material.enabled ? "material" : 
-            config.filters.morphology.enabled ? "morphology" :
-            config.filters.game.enabled ? "game" :
-            config.filters.conservationState.enabled ? "conservation" :
-            "typology"
-          } className="w-full">
-            <div className="px-4 pt-3 pb-2 sticky top-[114px] bg-card z-10">
-              <TabsList className="grid w-full h-auto" style={{ gridTemplateColumns: `repeat(${
-                [config.filters.material.enabled, config.filters.morphology.enabled, config.filters.game.enabled, 
-                 config.filters.conservationState.enabled, config.filters.typology.enabled].filter(Boolean).length
-              }, 1fr)` }}>
-                {config.filters.material.enabled && <TabsTrigger value="material" className="text-[10px] px-1 py-1.5">{config.filters.material.label}</TabsTrigger>}
-                {config.filters.morphology.enabled && <TabsTrigger value="morphology" className="text-[10px] px-1 py-1.5">Morph.</TabsTrigger>}
-                {config.filters.game.enabled && <TabsTrigger value="game" className="text-[10px] px-1 py-1.5">{config.filters.game.label}</TabsTrigger>}
-                {config.filters.conservationState.enabled && <TabsTrigger value="conservation" className="text-[10px] px-1 py-1.5">State</TabsTrigger>}
-                {config.filters.typology.enabled && <TabsTrigger value="typology" className="text-[10px] px-1 py-1.5">Type</TabsTrigger>}
-              </TabsList>
-            </div>
-            
-            {config.filters.material.enabled && (
-              <TabsContent value="material" className="mt-0">
-                <div className="px-4 py-2 border-b border-border bg-muted flex items-center justify-between">
-                  <p className="text-xs text-muted-foreground">
-                    Selected: <span className="font-semibold text-foreground">{selectedMaterials.size}</span> of <span className="font-semibold text-foreground">{materials.length}</span>
-                  </p>
-                  <div className="flex gap-1">
-                    <Button
-                      onClick={handleSelectAllMaterials}
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 text-xs px-2"
+          {standardFilters.length > 0 && (
+            <Tabs defaultValue={standardFilters[0]?.field} className="w-full">
+              <div className={`px-4 pt-3 pb-2 sticky ${booleanFilters.length > 0 ? 'top-[114px]' : 'top-[57px]'} bg-card z-10`}>
+                <TabsList className="grid w-full h-auto" style={{ gridTemplateColumns: `repeat(${standardFilters.length}, 1fr)` }}>
+                  {standardFilters.map(filter => (
+                    <TabsTrigger 
+                      key={filter.field} 
+                      value={filter.field} 
+                      className="text-[10px] px-1 py-1.5"
                     >
-                      All
-                    </Button>
-                    <Button
-                      onClick={handleDeselectAllMaterials}
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 text-xs px-2"
-                    >
-                      None
-                    </Button>
-                  </div>
-                </div>
-                <div className="px-4 py-3 space-y-3">
-                  {materials.map(material => (
-                    <div key={material} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`material-${material}`}
-                        checked={selectedMaterials.has(material)}
-                        onCheckedChange={() => handleMaterialToggle(material)}
-                      />
-                      <Label
-                        htmlFor={`material-${material}`}
-                        className="text-sm font-normal cursor-pointer flex-1"
-                      >
-                        {material}
-                      </Label>
-                      <span className="text-xs text-muted-foreground font-medium">
-                        {materialCounts[material] || 0}
-                      </span>
-                    </div>
+                      {filter.shortLabel || filter.label}
+                    </TabsTrigger>
                   ))}
-                </div>
-              </TabsContent>
-            )}
-            
-            {config.filters.morphology.enabled && (
-              <TabsContent value="morphology" className="mt-0">
-              <div className="px-4 py-2 border-b border-border bg-muted flex items-center justify-between">
-                <p className="text-xs text-muted-foreground">
-                  Selected: <span className="font-semibold text-foreground">{selectedMorphologies.size}</span> of <span className="font-semibold text-foreground">{morphologies.length}</span>
-                </p>
-                <div className="flex gap-1">
-                  <Button
-                    onClick={handleSelectAllMorphologies}
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 text-xs px-2"
-                  >
-                    All
-                  </Button>
-                  <Button
-                    onClick={handleDeselectAllMorphologies}
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 text-xs px-2"
-                  >
-                    None
-                  </Button>
-                </div>
+                </TabsList>
               </div>
-              <div className="px-4 py-3 space-y-3">
-                {morphologies.map(morphology => (
-                  <div key={morphology} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`morphology-${morphology}`}
-                      checked={selectedMorphologies.has(morphology)}
-                      onCheckedChange={() => handleMorphologyToggle(morphology)}
-                    />
-                    <Label
-                      htmlFor={`morphology-${morphology}`}
-                      className="text-sm font-normal cursor-pointer flex-1"
-                    >
-                      {morphology}
-                    </Label>
-                    <span className="text-xs text-muted-foreground font-medium">
-                      {morphologyCounts[morphology] || 0}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </TabsContent>
-            )}
-            
-            {config.filters.game.enabled && (
-              <TabsContent value="game" className="mt-0">
-              <div className="px-4 py-2 border-b border-border bg-muted flex items-center justify-between">
-                <p className="text-xs text-muted-foreground">
-                  Selected: <span className="font-semibold text-foreground">{selectedGames.size}</span> of <span className="font-semibold text-foreground">{games.length}</span>
-                </p>
-                <div className="flex gap-1">
-                  <Button
-                    onClick={handleSelectAllGames}
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 text-xs px-2"
-                  >
-                    All
-                  </Button>
-                  <Button
-                    onClick={handleDeselectAllGames}
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 text-xs px-2"
-                  >
-                    None
-                  </Button>
-                </div>
-              </div>
-              <div className="px-4 py-3 space-y-3">
-                {games.map(game => (
-                  <div key={game} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`game-${game}`}
-                      checked={selectedGames.has(game)}
-                      onCheckedChange={() => handleGameToggle(game)}
-                    />
-                    <Label
-                      htmlFor={`game-${game}`}
-                      className="text-sm font-normal cursor-pointer flex-1"
-                    >
-                      {game}
-                    </Label>
-                    <span className="text-xs text-muted-foreground font-medium">
-                      {gameCounts[game] || 0}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </TabsContent>
-            )}
-            
-            {config.filters.conservationState.enabled && (
-              <TabsContent value="conservation" className="mt-0">
-              <div className="px-4 py-2 border-b border-border bg-muted flex items-center justify-between">
-                <p className="text-xs text-muted-foreground">
-                  Selected: <span className="font-semibold text-foreground">{selectedConservationStates.size}</span> of <span className="font-semibold text-foreground">{conservationStates.length}</span>
-                </p>
-                <div className="flex gap-1">
-                  <Button
-                    onClick={handleSelectAllConservationStates}
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 text-xs px-2"
-                  >
-                    All
-                  </Button>
-                  <Button
-                    onClick={handleDeselectAllConservationStates}
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 text-xs px-2"
-                  >
-                    None
-                  </Button>
-                </div>
-              </div>
-              <div className="px-4 py-3 space-y-3">
-                {conservationStates.map(state => (
-                  <div key={state} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`conservation-${state}`}
-                      checked={selectedConservationStates.has(state)}
-                      onCheckedChange={() => handleConservationStateToggle(state)}
-                    />
-                    <Label
-                      htmlFor={`conservation-${state}`}
-                      className="text-sm font-normal cursor-pointer flex-1"
-                    >
-                      {state}
-                    </Label>
-                    <span className="text-xs text-muted-foreground font-medium">
-                      {conservationStateCounts[state] || 0}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </TabsContent>
-            )}
-            
-            {config.filters.typology.enabled && (
-              <TabsContent value="typology" className="mt-0">
-              <div className="px-4 py-2 border-b border-border bg-muted flex items-center justify-between">
-                <p className="text-xs text-muted-foreground">
-                  Selected: <span className="font-semibold text-foreground">{selectedTypologies.size}</span> of <span className="font-semibold text-foreground">{typologies.length}</span>
-                </p>
-                <div className="flex gap-1">
-                  <Button
-                    onClick={handleSelectAllTypologies}
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 text-xs px-2"
-                  >
-                    All
-                  </Button>
-                  <Button
-                    onClick={handleDeselectAllTypologies}
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 text-xs px-2"
-                  >
-                    None
-                  </Button>
-                </div>
-              </div>
-              <div className="px-4 py-3 space-y-3">
-                {typologies.map(typology => (
-                  <div key={typology} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`typology-${typology}`}
-                      checked={selectedTypologies.has(typology)}
-                      onCheckedChange={() => handleTypologyToggle(typology)}
-                    />
-                    <Label
-                      htmlFor={`typology-${typology}`}
-                      className="text-sm font-normal cursor-pointer flex-1"
-                    >
-                      {typology}
-                    </Label>
-                    <span className="text-xs text-muted-foreground font-medium">
-                      {typologyCounts[typology] || 0}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </TabsContent>
-            )}
-          </Tabs>
+              
+              {standardFilters.map(filter => {
+                const state = filterStates[filter.field]
+                if (!state) return null
+                
+                return (
+                  <TabsContent key={filter.field} value={filter.field} className="mt-0">
+                    <div className="px-4 py-2 border-b border-border bg-muted flex items-center justify-between">
+                      <p className="text-xs text-muted-foreground">
+                        Selected: <span className="font-semibold text-foreground">{state.selected.size}</span> of <span className="font-semibold text-foreground">{state.values.length}</span>
+                      </p>
+                      <div className="flex gap-1">
+                        <Button
+                          onClick={() => handleSelectAll(filter.field)}
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 text-xs px-2"
+                        >
+                          All
+                        </Button>
+                        <Button
+                          onClick={() => handleDeselectAll(filter.field)}
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 text-xs px-2"
+                        >
+                          None
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="px-4 py-3 space-y-3">
+                      {state.values.map(value => (
+                        <div key={value} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`${filter.field}-${value}`}
+                            checked={state.selected.has(value)}
+                            onCheckedChange={() => handleFilterToggle(filter.field, value)}
+                          />
+                          <Label
+                            htmlFor={`${filter.field}-${value}`}
+                            className="text-sm font-normal cursor-pointer flex-1"
+                          >
+                            {value}
+                          </Label>
+                          <span className="text-xs text-muted-foreground font-medium">
+                            {state.counts[value] || 0}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </TabsContent>
+                )
+              })}
+            </Tabs>
+          )}
         </div>
       )}
 
