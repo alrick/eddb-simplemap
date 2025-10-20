@@ -267,12 +267,13 @@ export function Map({ onPointCountChange }: MapProps) {
                   })
                   .map(([key, value]) => {
                     if (value !== null && value !== undefined && value !== '') {
+                      const label = config.popup.fieldLabels?.[key] || key
                       if (key === 'PleiadesId') {
                         const pleiadesUrl = `https://pleiades.stoa.org/places/${value}`
-                        return `<p><strong>${key}:</strong> <a href="${pleiadesUrl}" target="_blank" rel="noopener noreferrer" style="color: oklch(0.45 0.15 250); text-decoration: underline;">${value}</a></p>`
+                        return `<p><strong>${label}:</strong> <a href="${pleiadesUrl}" target="_blank" rel="noopener noreferrer" style="color: oklch(0.45 0.15 250); text-decoration: underline;">${value}</a></p>`
                       }
                       const parsedValue = parseMarkdown(String(value))
-                      return `<p><strong>${key}:</strong> ${parsedValue}</p>`
+                      return `<p><strong>${label}:</strong> ${parsedValue}</p>`
                     }
                     return ''
                   })
@@ -333,7 +334,9 @@ export function Map({ onPointCountChange }: MapProps) {
                   popupElement.appendChild(imageContainer)
                 }
 
-                marker.bindPopup(popupElement)
+                marker.bindPopup(popupElement, {
+                  maxWidth: config.popup.width || 300
+                })
 
                 markers.addLayer(marker)
                 markerMapRef.current.set(record.Id, marker)
@@ -468,12 +471,13 @@ export function Map({ onPointCountChange }: MapProps) {
               })
               .map(([key, value]) => {
                 if (value !== null && value !== undefined && value !== '') {
+                  const label = config.popup.fieldLabels?.[key] || key
                   if (key === 'PleiadesId') {
                     const pleiadesUrl = `https://pleiades.stoa.org/places/${value}`
-                    return `<p><strong>${key}:</strong> <a href="${pleiadesUrl}" target="_blank" rel="noopener noreferrer" style="color: oklch(0.45 0.15 250); text-decoration: underline;">${value}</a></p>`
+                    return `<p><strong>${label}:</strong> <a href="${pleiadesUrl}" target="_blank" rel="noopener noreferrer" style="color: oklch(0.45 0.15 250); text-decoration: underline;">${value}</a></p>`
                   }
                   const parsedValue = parseMarkdown(String(value))
-                  return `<p><strong>${key}:</strong> ${parsedValue}</p>`
+                  return `<p><strong>${label}:</strong> ${parsedValue}</p>`
                 }
                 return ''
               })
@@ -534,7 +538,9 @@ export function Map({ onPointCountChange }: MapProps) {
               popupElement.appendChild(imageContainer)
             }
 
-            marker.bindPopup(popupElement)
+            marker.bindPopup(popupElement, {
+              maxWidth: config.popup.width || 300
+            })
 
             markerClusterGroup.current!.addLayer(marker)
             markerMapRef.current.set(record.Id, marker)

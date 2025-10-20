@@ -32,6 +32,8 @@ export interface AppConfig {
   popup: {
     titleField: string
     displayFields?: string[]
+    fieldLabels?: Record<string, string>
+    width?: number
   }
   eddbServiceUrl: string
 }
@@ -96,7 +98,16 @@ export const config: AppConfig = {
   
   popup: {
     titleField: 'Title',
-    displayFields: undefined
+    displayFields: undefined,
+    fieldLabels: {
+      'Material': 'Matériel',
+      'Morphology': 'Morphologie',
+      'Game': 'Jeu',
+      'ConservationState': 'État de conservation',
+      'Typology': 'Typologie',
+      'PleiadesId': 'ID Pleiades'
+    },
+    width: 300
   },
   
   eddbServiceUrl: 'https://eddb.unifr.ch'
