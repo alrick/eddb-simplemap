@@ -36,7 +36,7 @@ export const config: AppConfig = {
   appName: 'Ludus',
   
   apiUrl: 'https://eddb.unifr.ch/noco/api/v2/tables/mw4mvjms6nkuq0f/records',
-  apiToken: 'hCmfVFzK4mpjHkyLJzD1U2plqzJInYmdhzQ8NrzR',
+  apiToken: 'hCmfVFzK4mpjHkyLJzD1U2plqzJInYmdhzQ8NrzR', // read-only token
   
   geoDataField: 'GeoData',
   
@@ -80,7 +80,7 @@ export const config: AppConfig = {
   ],
   
   debug: {
-    enabled: true,
+    enabled: false,
     showConsoleLog: true
   },
   
