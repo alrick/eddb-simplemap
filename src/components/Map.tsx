@@ -235,7 +235,7 @@ export function Map({ onPointCountChange }: MapProps) {
               if (!isNaN(lat) && !isNaN(lng)) {
                 const marker = L.marker([lat, lng], { icon: customIcon })
                 
-                const title = record.Title || 'Untitled'
+                const title = record[config.popup.titleField] || 'Untitled'
                 
                 const locations = [
                   record.Location1,
@@ -243,18 +243,28 @@ export function Map({ onPointCountChange }: MapProps) {
                   record.Location3
                 ].filter(loc => loc !== null && loc !== undefined && loc !== '').join(', ')
                 
+                const fieldsToDisplay = config.popup.displayFields || Object.keys(record)
+                
+                const alwaysExcluded = [
+                  config.geoDataField, 
+                  'Id', 
+                  config.popup.titleField, 
+                  'CreatedAt', 
+                  'UpdatedAt',
+                  'Location1',
+                  'Location2',
+                  'Location3',
+                  'Image'
+                ]
+                
                 const popupContent = Object.entries(record)
-                  .filter(([key]) => 
-                    key !== config.geoDataField && 
-                    key !== 'Id' && 
-                    key !== 'Title' && 
-                    key !== 'CreatedAt' && 
-                    key !== 'UpdatedAt' &&
-                    key !== 'Location1' &&
-                    key !== 'Location2' &&
-                    key !== 'Location3' &&
-                    key !== 'Image'
-                  )
+                  .filter(([key]) => {
+                    if (alwaysExcluded.includes(key)) return false
+                    if (config.popup.displayFields) {
+                      return config.popup.displayFields.includes(key)
+                    }
+                    return true
+                  })
                   .map(([key, value]) => {
                     if (value !== null && value !== undefined && value !== '') {
                       if (key === 'PleiadesId') {
@@ -426,7 +436,7 @@ export function Map({ onPointCountChange }: MapProps) {
           if (!isNaN(lat) && !isNaN(lng)) {
             const marker = L.marker([lat, lng], { icon: customIcon })
             
-            const title = record.Title || 'Untitled'
+            const title = record[config.popup.titleField] || 'Untitled'
             
             const locations = [
               record.Location1,
@@ -434,18 +444,28 @@ export function Map({ onPointCountChange }: MapProps) {
               record.Location3
             ].filter(loc => loc !== null && loc !== undefined && loc !== '').join(', ')
             
+            const fieldsToDisplay = config.popup.displayFields || Object.keys(record)
+            
+            const alwaysExcluded = [
+              config.geoDataField, 
+              'Id', 
+              config.popup.titleField, 
+              'CreatedAt', 
+              'UpdatedAt',
+              'Location1',
+              'Location2',
+              'Location3',
+              'Image'
+            ]
+            
             const popupContent = Object.entries(record)
-              .filter(([key]) => 
-                key !== config.geoDataField && 
-                key !== 'Id' && 
-                key !== 'Title' && 
-                key !== 'CreatedAt' && 
-                key !== 'UpdatedAt' &&
-                key !== 'Location1' &&
-                key !== 'Location2' &&
-                key !== 'Location3' &&
-                key !== 'Image'
-              )
+              .filter(([key]) => {
+                if (alwaysExcluded.includes(key)) return false
+                if (config.popup.displayFields) {
+                  return config.popup.displayFields.includes(key)
+                }
+                return true
+              })
               .map(([key, value]) => {
                 if (value !== null && value !== undefined && value !== '') {
                   if (key === 'PleiadesId') {

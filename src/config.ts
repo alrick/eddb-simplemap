@@ -29,6 +29,10 @@ export interface AppConfig {
     defaultZoom: number
     clusterRadius: number
   }
+  popup: {
+    titleField: string
+    displayFields?: string[]
+  }
   eddbServiceUrl: string
 }
 
@@ -88,6 +92,11 @@ export const config: AppConfig = {
     defaultCenter: [46.8, 8.2],
     defaultZoom: 8,
     clusterRadius: 50
+  },
+  
+  popup: {
+    titleField: 'Title',
+    displayFields: undefined
   },
   
   eddbServiceUrl: 'https://eddb.unifr.ch'
