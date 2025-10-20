@@ -1,25 +1,27 @@
-export interface StandardFilterConfig {
+export interface StandardFilterType {
   type: 'standard'
-  field: string
-  label: string
   shortLabel?: string
 }
 
-export interface BooleanFilterConfig {
+export interface BooleanFilterType {
   type: 'boolean'
-  field: string
-  label: string
   checkFunction?: (record: any) => boolean
 }
 
-export type FilterConfig = StandardFilterConfig | BooleanFilterConfig
+export type FilterType = StandardFilterType | BooleanFilterType | null
+
+export interface PropertyConfig {
+  field: string
+  label?: string
+  filter: FilterType
+}
 
 export interface AppConfig {
   appName: string
   apiUrl: string
   apiToken: string
   geoDataField: string
-  filters: FilterConfig[]
+  properties: PropertyConfig[]
   debug: {
     enabled: boolean
     showConsoleLog: boolean
@@ -31,8 +33,6 @@ export interface AppConfig {
   }
   popup: {
     titleField: string
-    displayFields?: string[]
-    fieldLabels?: Record<string, string>
     width?: number
   }
   eddbServiceUrl: string
@@ -42,45 +42,62 @@ export const config: AppConfig = {
   appName: 'Ludus',
   
   apiUrl: 'https://eddb.unifr.ch/noco/api/v2/tables/mw4mvjms6nkuq0f/records',
-  apiToken: 'hCmfVFzK4mpjHkyLJzD1U2plqzJInYmdhzQ8NrzR', // read-only token
+  apiToken: 'hCmfVFzK4mpjHkyLJzD1U2plqzJInYmdhzQ8NrzR',
   
   geoDataField: 'GeoData',
   
-  filters: [
+  properties: [
     {
-      type: 'standard',
       field: 'Material',
-      label: 'Material'
+      label: 'Matériel',
+      filter: {
+        type: 'standard'
+      }
     },
     {
-      type: 'standard',
       field: 'Morphology',
-      label: 'Morphology',
-      shortLabel: 'Morph.'
+      label: 'Morphologie',
+      filter: {
+        type: 'standard',
+        shortLabel: 'Morph.'
+      }
     },
     {
-      type: 'standard',
       field: 'Game',
-      label: 'Game'
+      label: 'Jeu',
+      filter: {
+        type: 'standard'
+      }
     },
     {
-      type: 'standard',
       field: 'ConservationState',
-      label: 'Conservation State',
-      shortLabel: 'State'
+      label: 'État de conservation',
+      filter: {
+        type: 'standard',
+        shortLabel: 'State'
+      }
     },
     {
-      type: 'standard',
       field: 'Typology',
-      label: 'Typology',
-      shortLabel: 'Type'
+      label: 'Typologie',
+      filter: {
+        type: 'standard',
+        shortLabel: 'Type'
+      }
     },
     {
-      type: 'boolean',
+      field: 'PleiadesId',
+      label: 'ID Pleiades',
+      filter: null
+    },
+    {
       field: 'Image',
       label: 'Has Images',
-      checkFunction: (record: any) => {
-        return record.Image && Array.isArray(record.Image) && record.Image.length > 0 && record.Image.some((img: any) => img.signedPath)
+      filter: {
+        type: 'boolean',
+        checkFunction: (record: any) => {
+          return record.Image && Array.isArray(record.Image) && record.Image.length > 0 && record.Image.some((img: any) => img.signedPath)
+        }
       }
     }
   ],
@@ -98,15 +115,6 @@ export const config: AppConfig = {
   
   popup: {
     titleField: 'Title',
-    displayFields: undefined,
-    fieldLabels: {
-      'Material': 'Matériel',
-      'Morphology': 'Morphologie',
-      'Game': 'Jeu',
-      'ConservationState': 'État de conservation',
-      'Typology': 'Typologie',
-      'PleiadesId': 'ID Pleiades'
-    },
     width: 300
   },
   

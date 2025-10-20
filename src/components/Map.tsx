@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { marked } from 'marked'
 import { toast } from 'sonner'
-import { config, type StandardFilterConfig, type BooleanFilterConfig } from '@/config'
+import { config, type PropertyConfig } from '@/config'
 
 interface ImageData {
   signedPath?: string
@@ -41,6 +41,11 @@ interface FilterState {
 }
 
 const imageCache = new globalThis.Map<string, string>()
+
+function getPropertyLabel(field: string): string {
+  const property = config.properties.find(p => p.field === field)
+  return property?.label || field
+}
 
 async function cacheImage(signedPath: string): Promise<string> {
   if (imageCache.has(signedPath)) {
@@ -88,8 +93,18 @@ export function Map({ onPointCountChange }: MapProps) {
   const [showOpenById, setShowOpenById] = useState(false)
   const [inputId, setInputId] = useState('')
 
-  const standardFilters = useMemo(() => config.filters.filter(f => f.type === 'standard') as StandardFilterConfig[], [])
-  const booleanFilters = useMemo(() => config.filters.filter(f => f.type === 'boolean') as BooleanFilterConfig[], [])
+  const standardFilterProperties = useMemo(() => 
+    config.properties.filter(p => p.filter && p.filter.type === 'standard'), 
+    []
+  )
+  const booleanFilterProperties = useMemo(() => 
+    config.properties.filter(p => p.filter && p.filter.type === 'boolean'), 
+    []
+  )
+  const displayProperties = useMemo(() => 
+    config.properties.filter(p => p.filter === null || p.filter.type === 'standard'), 
+    []
+  )
 
   useEffect(() => {
     if (!mapContainer.current || mapInstance.current) return
@@ -144,7 +159,7 @@ export function Map({ onPointCountChange }: MapProps) {
         
         const newFilterStates: Record<string, FilterState> = {}
         
-        standardFilters.forEach(filter => {
+        standardFilterProperties.forEach(property => {
           const countMap: Record<string, number> = {}
           
           allRecords.forEach(record => {
@@ -155,8 +170,8 @@ export function Map({ onPointCountChange }: MapProps) {
                 const lng = parseFloat(parts[1])
                 
                 if (!isNaN(lat) && !isNaN(lng)) {
-                  const value = typeof record[filter.field] === 'string' && record[filter.field].trim() !== '' 
-                    ? record[filter.field] 
+                  const value = typeof record[property.field] === 'string' && record[property.field].trim() !== '' 
+                    ? record[property.field] 
                     : 'Unknown'
                   countMap[value] = (countMap[value] || 0) + 1
                 }
@@ -171,7 +186,7 @@ export function Map({ onPointCountChange }: MapProps) {
             ? [...uniqueValues, 'Unknown']
             : uniqueValues
           
-          newFilterStates[filter.field] = {
+          newFilterStates[property.field] = {
             values: valuesWithUnknown,
             counts: countMap,
             selected: new Set(valuesWithUnknown)
@@ -181,8 +196,8 @@ export function Map({ onPointCountChange }: MapProps) {
         setFilterStates(newFilterStates)
         
         const newBooleanFilterStates: Record<string, boolean> = {}
-        booleanFilters.forEach(filter => {
-          newBooleanFilterStates[filter.field] = false
+        booleanFilterProperties.forEach(property => {
+          newBooleanFilterStates[property.field] = false
         })
         setBooleanFilterStates(newBooleanFilterStates)
         
@@ -243,8 +258,6 @@ export function Map({ onPointCountChange }: MapProps) {
                   record.Location3
                 ].filter(loc => loc !== null && loc !== undefined && loc !== '').join(', ')
                 
-                const fieldsToDisplay = config.popup.displayFields || Object.keys(record)
-                
                 const alwaysExcluded = [
                   config.geoDataField, 
                   'Id', 
@@ -257,18 +270,14 @@ export function Map({ onPointCountChange }: MapProps) {
                   'Image'
                 ]
                 
-                const popupContent = Object.entries(record)
-                  .filter(([key]) => {
-                    if (alwaysExcluded.includes(key)) return false
-                    if (config.popup.displayFields) {
-                      return config.popup.displayFields.includes(key)
-                    }
-                    return true
-                  })
-                  .map(([key, value]) => {
+                const displayFields = displayProperties.map(p => p.field)
+                
+                const popupContent = displayProperties
+                  .map(property => {
+                    const value = record[property.field]
                     if (value !== null && value !== undefined && value !== '') {
-                      const label = config.popup.fieldLabels?.[key] || key
-                      if (key === 'PleiadesId') {
+                      const label = getPropertyLabel(property.field)
+                      if (property.field === 'PleiadesId') {
                         const pleiadesUrl = `https://pleiades.stoa.org/places/${value}`
                         return `<p><strong>${label}:</strong> <a href="${pleiadesUrl}" target="_blank" rel="noopener noreferrer" style="color: oklch(0.45 0.15 250); text-decoration: underline;">${value}</a></p>`
                       }
@@ -411,20 +420,22 @@ export function Map({ onPointCountChange }: MapProps) {
 
     let validPoints = 0
     apiData.forEach(record => {
-      for (const filter of standardFilters) {
-        const recordValue = typeof record[filter.field] === 'string' && record[filter.field].trim() !== '' 
-          ? record[filter.field] 
+      for (const property of standardFilterProperties) {
+        const recordValue = typeof record[property.field] === 'string' && record[property.field].trim() !== '' 
+          ? record[property.field] 
           : 'Unknown'
         
-        if (!filterStates[filter.field]?.selected.has(recordValue)) {
+        if (!filterStates[property.field]?.selected.has(recordValue)) {
           return
         }
       }
       
-      for (const filter of booleanFilters) {
-        if (booleanFilterStates[filter.field]) {
-          const checkFunc = filter.checkFunction || ((rec: any) => !!rec[filter.field])
-          if (!checkFunc(record)) {
+      for (const property of booleanFilterProperties) {
+        if (booleanFilterStates[property.field]) {
+          const checkFunc = property.filter?.type === 'boolean' ? property.filter.checkFunction : undefined
+          const defaultCheck = (rec: any) => !!rec[property.field]
+          const finalCheck = checkFunc || defaultCheck
+          if (!finalCheck(record)) {
             return
           }
         }
@@ -447,32 +458,12 @@ export function Map({ onPointCountChange }: MapProps) {
               record.Location3
             ].filter(loc => loc !== null && loc !== undefined && loc !== '').join(', ')
             
-            const fieldsToDisplay = config.popup.displayFields || Object.keys(record)
-            
-            const alwaysExcluded = [
-              config.geoDataField, 
-              'Id', 
-              config.popup.titleField, 
-              'CreatedAt', 
-              'UpdatedAt',
-              'Location1',
-              'Location2',
-              'Location3',
-              'Image'
-            ]
-            
-            const popupContent = Object.entries(record)
-              .filter(([key]) => {
-                if (alwaysExcluded.includes(key)) return false
-                if (config.popup.displayFields) {
-                  return config.popup.displayFields.includes(key)
-                }
-                return true
-              })
-              .map(([key, value]) => {
+            const popupContent = displayProperties
+              .map(property => {
+                const value = record[property.field]
                 if (value !== null && value !== undefined && value !== '') {
-                  const label = config.popup.fieldLabels?.[key] || key
-                  if (key === 'PleiadesId') {
+                  const label = getPropertyLabel(property.field)
+                  if (property.field === 'PleiadesId') {
                     const pleiadesUrl = `https://pleiades.stoa.org/places/${value}`
                     return `<p><strong>${label}:</strong> <a href="${pleiadesUrl}" target="_blank" rel="noopener noreferrer" style="color: oklch(0.45 0.15 250); text-decoration: underline;">${value}</a></p>`
                   }
@@ -555,7 +546,7 @@ export function Map({ onPointCountChange }: MapProps) {
     }
 
     onPointCountChange?.(validPoints)
-  }, [filterStates, booleanFilterStates, apiData, onPointCountChange, standardFilters, booleanFilters])
+  }, [filterStates, booleanFilterStates, apiData, onPointCountChange, standardFilterProperties, booleanFilterProperties, displayProperties])
 
   const handleFilterToggle = (field: string, value: string) => {
     setFilterStates(prev => {
@@ -663,7 +654,7 @@ export function Map({ onPointCountChange }: MapProps) {
     }
   }
 
-  const hasFilters = config.filters.length > 0
+  const hasFilters = standardFilterProperties.length > 0 || booleanFilterProperties.length > 0
 
   return (
     <div className="relative w-full h-full">
@@ -778,21 +769,21 @@ export function Map({ onPointCountChange }: MapProps) {
             </div>
           </div>
 
-          {booleanFilters.length > 0 && (
+          {booleanFilterProperties.length > 0 && (
             <div className="border-b border-border">
-              {booleanFilters.map(filter => (
-                <div key={filter.field} className="px-4 py-3 border-b border-border bg-muted/50 last:border-b-0">
+              {booleanFilterProperties.map(property => (
+                <div key={property.field} className="px-4 py-3 border-b border-border bg-muted/50 last:border-b-0">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Image size={18} weight="fill" className="text-primary" />
-                      <Label htmlFor={`filter-${filter.field}`} className="text-sm font-medium cursor-pointer">
-                        {filter.label}
+                      <Label htmlFor={`filter-${property.field}`} className="text-sm font-medium cursor-pointer">
+                        {getPropertyLabel(property.field)}
                       </Label>
                     </div>
                     <Switch
-                      id={`filter-${filter.field}`}
-                      checked={booleanFilterStates[filter.field] || false}
-                      onCheckedChange={() => handleBooleanFilterToggle(filter.field)}
+                      id={`filter-${property.field}`}
+                      checked={booleanFilterStates[property.field] || false}
+                      onCheckedChange={() => handleBooleanFilterToggle(property.field)}
                     />
                   </div>
                 </div>
@@ -800,35 +791,38 @@ export function Map({ onPointCountChange }: MapProps) {
             </div>
           )}
 
-          {standardFilters.length > 0 && (
-            <Tabs defaultValue={standardFilters[0]?.field} className="w-full">
-              <div className={`px-4 pt-3 pb-2 sticky ${booleanFilters.length > 0 ? 'top-[114px]' : 'top-[57px]'} bg-card z-10`}>
-                <TabsList className="grid w-full h-auto" style={{ gridTemplateColumns: `repeat(${standardFilters.length}, 1fr)` }}>
-                  {standardFilters.map(filter => (
-                    <TabsTrigger 
-                      key={filter.field} 
-                      value={filter.field} 
-                      className="text-[10px] px-1 py-1.5"
-                    >
-                      {filter.shortLabel || filter.label}
-                    </TabsTrigger>
-                  ))}
+          {standardFilterProperties.length > 0 && (
+            <Tabs defaultValue={standardFilterProperties[0]?.field} className="w-full">
+              <div className={`px-4 pt-3 pb-2 sticky ${booleanFilterProperties.length > 0 ? 'top-[114px]' : 'top-[57px]'} bg-card z-10`}>
+                <TabsList className="grid w-full h-auto" style={{ gridTemplateColumns: `repeat(${standardFilterProperties.length}, 1fr)` }}>
+                  {standardFilterProperties.map(property => {
+                    const shortLabel = property.filter?.type === 'standard' ? property.filter.shortLabel : undefined
+                    return (
+                      <TabsTrigger 
+                        key={property.field} 
+                        value={property.field} 
+                        className="text-[10px] px-1 py-1.5"
+                      >
+                        {shortLabel || getPropertyLabel(property.field)}
+                      </TabsTrigger>
+                    )
+                  })}
                 </TabsList>
               </div>
               
-              {standardFilters.map(filter => {
-                const state = filterStates[filter.field]
+              {standardFilterProperties.map(property => {
+                const state = filterStates[property.field]
                 if (!state) return null
                 
                 return (
-                  <TabsContent key={filter.field} value={filter.field} className="mt-0">
+                  <TabsContent key={property.field} value={property.field} className="mt-0">
                     <div className="px-4 py-2 border-b border-border bg-muted flex items-center justify-between">
                       <p className="text-xs text-muted-foreground">
                         Selected: <span className="font-semibold text-foreground">{state.selected.size}</span> of <span className="font-semibold text-foreground">{state.values.length}</span>
                       </p>
                       <div className="flex gap-1">
                         <Button
-                          onClick={() => handleSelectAll(filter.field)}
+                          onClick={() => handleSelectAll(property.field)}
                           variant="ghost"
                           size="sm"
                           className="h-6 text-xs px-2"
@@ -836,7 +830,7 @@ export function Map({ onPointCountChange }: MapProps) {
                           All
                         </Button>
                         <Button
-                          onClick={() => handleDeselectAll(filter.field)}
+                          onClick={() => handleDeselectAll(property.field)}
                           variant="ghost"
                           size="sm"
                           className="h-6 text-xs px-2"
@@ -849,12 +843,12 @@ export function Map({ onPointCountChange }: MapProps) {
                       {state.values.map(value => (
                         <div key={value} className="flex items-center space-x-2">
                           <Checkbox
-                            id={`${filter.field}-${value}`}
+                            id={`${property.field}-${value}`}
                             checked={state.selected.has(value)}
-                            onCheckedChange={() => handleFilterToggle(filter.field, value)}
+                            onCheckedChange={() => handleFilterToggle(property.field, value)}
                           />
                           <Label
-                            htmlFor={`${filter.field}-${value}`}
+                            htmlFor={`${property.field}-${value}`}
                             className="text-sm font-normal cursor-pointer flex-1"
                           >
                             {value}

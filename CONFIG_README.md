@@ -2,57 +2,141 @@
 
 Ce guide explique comment configurer l'application de carte interactive Ludus.
 
-## Configuration du Popup
+## Configuration des Propriétés
 
-La configuration du popup permet de contrôler comment les informations des points sont affichées lorsqu'on clique dessus.
+La nouvelle configuration unifiée des propriétés permet de contrôler à la fois l'affichage dans les popups, les labels, et les filtres disponibles.
 
-### Propriétés disponibles
+### Structure d'une propriété
 
 ```typescript
-popup: {
-  titleField: string        // Le champ à utiliser comme titre du popup
-  displayFields?: string[]  // Liste optionnelle des champs à afficher (si undefined, tous les champs sont affichés)
+interface PropertyConfig {
+  field: string           // Le nom du champ dans les données API
+  label?: string          // Label d'affichage optionnel (si absent, utilise le nom du champ)
+  filter: FilterType      // Configuration du filtre (ou null pour pas de filtre)
 }
 ```
+
+### Types de filtres
+
+#### 1. Filtre standard (liste de sélection)
+
+```typescript
+{
+  field: 'Material',
+  label: 'Matériel',
+  filter: {
+    type: 'standard',
+    shortLabel: 'Mat.'    // Optionnel: label court pour les onglets
+  }
+}
+```
+
+#### 2. Filtre booléen (interrupteur on/off)
+
+```typescript
+{
+  field: 'Image',
+  label: 'A des images',
+  filter: {
+    type: 'boolean',
+    checkFunction: (record) => {  // Optionnel: fonction de vérification personnalisée
+      return record.Image && Array.isArray(record.Image) && record.Image.length > 0
+    }
+  }
+}
+```
+
+Si `checkFunction` n'est pas fourni, le filtre vérifiera simplement si le champ est truthy: `!!record[field]`
+
+#### 3. Pas de filtre
+
+```typescript
+{
+  field: 'PleiadesId',
+  label: 'ID Pleiades',
+  filter: null            // Pas de filtre, uniquement affiché dans le popup
+}
+```
+
+### Ordre d'affichage
+
+L'ordre de déclaration des propriétés dans le tableau détermine :
+- L'ordre d'affichage des champs dans le popup
+- L'ordre des filtres dans l'interface
 
 ### Exemples
 
-#### Exemple 1 : Afficher tous les champs (configuration par défaut)
+#### Exemple 1 : Configuration complète
 
 ```typescript
-popup: {
-  titleField: 'Title',
-  displayFields: undefined  // Tous les champs seront affichés
-}
+properties: [
+  {
+    field: 'Material',
+    label: 'Matériel',
+    filter: {
+      type: 'standard'
+    }
+  },
+  {
+    field: 'Morphology',
+    label: 'Morphologie',
+    filter: {
+      type: 'standard',
+      shortLabel: 'Morph.'
+    }
+  },
+  {
+    field: 'PleiadesId',
+    label: 'ID Pleiades',
+    filter: null
+  },
+  {
+    field: 'Image',
+    label: 'A des images',
+    filter: {
+      type: 'boolean',
+      checkFunction: (record) => record.Image?.length > 0
+    }
+  }
+]
 ```
 
-#### Exemple 2 : Afficher uniquement certains champs
+#### Exemple 2 : Utiliser le nom du champ comme label
 
 ```typescript
-popup: {
-  titleField: 'Title',
-  displayFields: ['Material', 'Morphology', 'Game', 'PleiadesId', 'Description']
-}
+properties: [
+  {
+    field: 'Material',
+    // Pas de label, "Material" sera utilisé
+    filter: { type: 'standard' }
+  }
+]
 ```
 
-Dans cet exemple, seuls les champs spécifiés seront affichés dans le popup (en plus des locations et des images).
-
-#### Exemple 3 : Utiliser un champ différent comme titre
+#### Exemple 3 : Seulement l'affichage, pas de filtres
 
 ```typescript
-popup: {
-  titleField: 'Name',  // Utilise le champ "Name" au lieu de "Title"
-  displayFields: ['Type', 'Date', 'Location']
-}
+properties: [
+  {
+    field: 'Description',
+    label: 'Description',
+    filter: null
+  },
+  {
+    field: 'Date',
+    label: 'Date',
+    filter: null
+  }
+]
 ```
 
 ### Champs toujours exclus
 
-Les champs suivants sont toujours exclus de l'affichage, même s'ils sont inclus dans `displayFields` :
+Les champs suivants sont toujours exclus de l'affichage dans le popup :
 
 - `GeoData` (ou le champ défini dans `geoDataField`)
 - `Id`
-- Le champ défini dans `titleField`
+- Le champ défini dans `popup.titleField`
 - `CreatedAt`
 - `UpdatedAt`
 - `Location1`, `Location2`, `Location3` (affichés groupés comme "Locations")
@@ -65,6 +149,24 @@ Les champs suivants sont toujours exclus de l'affichage, même s'ils sont inclus
 - **Markdown** : Toutes les valeurs sont analysées comme Markdown
 - **Images** : Les images sont affichées en bas du popup si disponibles
 
+## Configuration du Popup
+
+```typescript
+popup: {
+  titleField: string  // Le champ à utiliser comme titre du popup
+  width?: number      // Largeur optionnelle du popup en pixels (défaut: 300)
+}
+```
+
+### Exemple
+
+```typescript
+popup: {
+  titleField: 'Title',
+  width: 400
+}
+```
+
 ## Configuration complète
 
 Voir le fichier `src/config.ts` pour la configuration complète de l'application incluant :
@@ -73,7 +175,7 @@ Voir le fichier `src/config.ts` pour la configuration complète de l'application
 - URL de l'API
 - Token d'authentification
 - Champ de données géographiques
-- Filtres
+- Propriétés (affichage, labels et filtres)
 - Configuration de la carte
-- Configuration du popup (nouvelle)
+- Configuration du popup
 - URL du service EDDB
