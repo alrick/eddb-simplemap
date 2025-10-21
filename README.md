@@ -13,10 +13,13 @@
    - [Configuration de la carte](#configuration-de-la-carte)
    - [Menu de filtres](#menu-de-filtres)
    - [Mode debug](#mode-debug)
-4. [Guide des filtres](#guide-des-filtres)
-5. [Propriétés relationnelles](#propriétés-relationnelles)
-6. [Personnalisation de la page About](#personnalisation-de-la-page-about)
-7. [Exemples de configuration](#exemples-de-configuration)
+5. [Guide des filtres](#guide-des-filtres)
+6. [Propriétés relationnelles](#propriétés-relationnelles)
+7. [Personnalisation de la page About](#personnalisation-de-la-page-about)
+8. [Exemples de configuration](#exemples-de-configuration)
+9. [Conseils et bonnes pratiques](#conseils-et-bonnes-pratiques)
+10. [Mise en production](#mise-en-production)
+11. [Support et contribution](#support-et-contribution)
 
 ---
 
@@ -840,6 +843,14 @@ export const config: AppConfig = {
 1. **Largeur** : Ajustez `width` en fonction de la quantité d'information affichée
 2. **Images** : Vérifiez que le champ image contient bien la structure attendue par NocoDB
 3. **Markdown** : Profitez du support Markdown pour formatter les descriptions
+
+---
+
+## Mise en production
+
+- Adapter le titre dans `index.html`
+- Copier la configuration `config.projet.ts` dans `config.ts`
+- Configurer la base dans `vite.config.ts`
 
 ---
 
