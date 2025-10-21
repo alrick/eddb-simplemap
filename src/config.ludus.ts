@@ -36,6 +36,7 @@ export interface AppConfig {
   popup: {
     titleField: string
     width?: number
+    imageField?: string
   }
   filterMenu: {
     type: FilterMenuType
@@ -97,7 +98,8 @@ export const config: AppConfig = {
       filter: {
         type: 'boolean',
         checkFunction: (record: any) => {
-          return record.Image && Array.isArray(record.Image) && record.Image.length > 0 && record.Image.some((img: any) => img.signedPath)
+          const imageField = 'Image'
+          return record[imageField] && Array.isArray(record[imageField]) && record[imageField].length > 0 && record[imageField].some((img: any) => img.signedPath)
         }
       }
     }
@@ -116,7 +118,8 @@ export const config: AppConfig = {
   
   popup: {
     titleField: 'Title',
-    width: 300
+    width: 300,
+    imageField: 'Image'
   },
   
   filterMenu: {

@@ -20,7 +20,6 @@ interface ImageData {
 
 interface ApiRecord {
   Id: number
-  Image?: ImageData[]
   [key: string]: any
 }
 
@@ -275,7 +274,7 @@ export function Map({ onPointCountChange }: MapProps) {
                   'Location1',
                   'Location2',
                   'Location3',
-                  'Image'
+                  ...(config.popup.imageField ? [config.popup.imageField] : [])
                 ]
                 
                 const displayFields = displayProperties.map(p => p.field)
@@ -302,14 +301,14 @@ export function Map({ onPointCountChange }: MapProps) {
                 const popupElement = document.createElement('div')
                 popupElement.innerHTML = `<div><h3>${title}</h3>${locationsHtml}${popupContent}</div>`
                 
-                if (record.Image && Array.isArray(record.Image) && record.Image.length > 0) {
+                if (config.popup.imageField && record[config.popup.imageField] && Array.isArray(record[config.popup.imageField]) && record[config.popup.imageField].length > 0) {
                   const imageContainer = document.createElement('div')
                   imageContainer.style.marginTop = '12px'
                   imageContainer.style.display = 'flex'
                   imageContainer.style.gap = '8px'
                   imageContainer.style.flexWrap = 'wrap'
                   
-                  record.Image.forEach((img: ImageData) => {
+                  record[config.popup.imageField].forEach((img: ImageData) => {
                     if (img.signedPath) {
                       const imgWrapper = document.createElement('div')
                       imgWrapper.style.width = '120px'
@@ -488,14 +487,14 @@ export function Map({ onPointCountChange }: MapProps) {
             const popupElement = document.createElement('div')
             popupElement.innerHTML = `<div><h3>${title}</h3>${locationsHtml}${popupContent}</div>`
             
-            if (record.Image && Array.isArray(record.Image) && record.Image.length > 0) {
+            if (config.popup.imageField && record[config.popup.imageField] && Array.isArray(record[config.popup.imageField]) && record[config.popup.imageField].length > 0) {
               const imageContainer = document.createElement('div')
               imageContainer.style.marginTop = '12px'
               imageContainer.style.display = 'flex'
               imageContainer.style.gap = '8px'
               imageContainer.style.flexWrap = 'wrap'
               
-              record.Image.forEach((img: ImageData) => {
+              record[config.popup.imageField].forEach((img: ImageData) => {
                 if (img.signedPath) {
                   const imgWrapper = document.createElement('div')
                   imgWrapper.style.width = '120px'
