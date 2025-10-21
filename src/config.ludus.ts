@@ -39,67 +39,61 @@ export interface AppConfig {
 }
 
 export const config: AppConfig = {
-  appName: 'HolyNet',
+  appName: 'Ludus',
   
-  apiUrl: 'https://eddb.unifr.ch/noco/api/v2/tables/mnn6jpi8328qbc6/records',
-  apiToken: 'Q1cPWj4uxDBSrDqlU86Gyto77Cku7nGkvwmdbT6W',
+  apiUrl: 'https://eddb.unifr.ch/noco/api/v2/tables/mw4mvjms6nkuq0f/records',
+  apiToken: 'hCmfVFzK4mpjHkyLJzD1U2plqzJInYmdhzQ8NrzR',
   
-  geoDataField: 'Coordinates',
+  geoDataField: 'GeoData',
   
   properties: [
     {
-      field: 'TownVillage',
-      label: 'Town / Village',
+      field: 'Material',
+      filter: {
+        type: 'standard'
+      }
+    },
+    {
+      field: 'Morphology',
+      filter: {
+        type: 'standard',
+        shortLabel: 'Morph.'
+      }
+    },
+    {
+      field: 'Game',
+      filter: {
+        type: 'standard'
+      }
+    },
+    {
+      field: 'ConservationState',
+      label: 'Conservation State',
+      filter: {
+        type: 'standard',
+        shortLabel: 'State'
+      }
+    },
+    {
+      field: 'Typology',
+      filter: {
+        type: 'standard',
+        shortLabel: 'Type'
+      }
+    },
+    {
+      field: 'PleiadesId',
+      label: 'Pleiades ID',
       filter: null
     },
     {
-      field: 'HistoricalDenomination',
-      label: 'Historical Denomination',
-      filter: null
-    },
-    {
-      field: 'Coordinates',
-      label: 'Coordinates',
-      filter: null
-    },
-    {
-      field: 'TimeOfEmergence',
-      label: 'Time of Emergence',
+      field: 'Image',
+      label: 'Has Images',
       filter: {
-        type: 'standard',
-        shortLabel: 'ToE'
-      }
-    },
-    {
-      field: 'TypologyLegendaryPhysiognomy',
-      label: 'Typology / Legendary Physiognomy',
-      filter: {
-        type: 'standard',
-        shortLabel: 'Leg. Physiognomy'
-      }
-    },
-    {
-      field: 'TypologyConnectivity',
-      label: 'Typology / Connectivity',
-      filter: {
-        type: 'standard',
-        shortLabel: 'Connectivity'
-      }
-    },
-    {
-      field: 'TypologySurroundingEnvironment',
-      label: 'Typology / Surrounding Environment',
-      filter: {
-        type: 'standard',
-        shortLabel: 'Surrounding Env.'
-      }
-    },
-    {
-      field: 'CultObjectMateriality',
-      label: 'Cult Object Materiality',
-      filter: {
-        type: 'standard',
-        shortLabel: 'CO Materiality'
+        type: 'boolean',
+        checkFunction: (record: any) => {
+          return record.Image && Array.isArray(record.Image) && record.Image.length > 0 && record.Image.some((img: any) => img.signedPath)
+        }
       }
     }
   ],
@@ -116,8 +110,8 @@ export const config: AppConfig = {
   },
   
   popup: {
-    titleField: 'Denomination',
-    width: 500
+    titleField: 'Title',
+    width: 300
   },
   
   eddbServiceUrl: 'https://eddb.unifr.ch'
