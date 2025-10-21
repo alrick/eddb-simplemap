@@ -77,7 +77,7 @@ export const config: AppConfig = {
     },
     {
       field: 'TypologyLegendaryPhysiognomy',
-      label: 'Typology / Legendary Physiognomy',
+      label: 'Typology - Legendary Physiognomy',
       filter: {
         type: 'standard',
         shortLabel: 'Leg. Physiognomy'
@@ -85,7 +85,7 @@ export const config: AppConfig = {
     },
     {
       field: 'TypologyConnectivity',
-      label: 'Typology / Connectivity',
+      label: 'Typology - Connectivity',
       filter: {
         type: 'standard',
         shortLabel: 'Connectivity'
@@ -93,7 +93,7 @@ export const config: AppConfig = {
     },
     {
       field: 'TypologySurroundingEnvironment',
-      label: 'Typology / Surrounding Environment',
+      label: 'Typology - Surrounding Environment',
       filter: {
         type: 'standard',
         shortLabel: 'Surrounding Env.'
@@ -101,10 +101,48 @@ export const config: AppConfig = {
     },
     {
       field: 'CultObjectMateriality',
-      label: 'Cult Object Materiality',
+      label: 'Cult Object - Materiality',
       filter: {
         type: 'standard',
         shortLabel: 'CO Materiality'
+      }
+    },
+    {
+      field: 'CultObjectCulticIdentity',
+      label: 'Cult Object - Cultic Identity',
+      filter: null
+    },
+    {
+      field: 'AssociatedMemorialNetworks',
+      label: 'Associated Memorial Networks',
+      filter: {
+        type: 'standard',
+        shortLabel: 'Memorial Networks'
+      }
+    },
+    {
+      field: 'AssociatedReligiousGroups',
+      label: 'Associated Religious Groups',
+      filter: null
+    },
+    {
+      field: 'ExperientialDimension',
+      label: 'Experiential Dimension',
+      filter: null
+    },
+    {
+      field: 'History',
+      label: 'History',
+      filter: null
+    },
+    {
+      field: 'Visuals',
+      label: 'Has Images',
+      filter: {
+        type: 'boolean',
+        checkFunction: (record: any) => {
+          return record.Visuals && Array.isArray(record.Visuals) && record.Visuals.length > 0 && record.Visuals.some((img: any) => img.signedPath)
+        }
       }
     }
   ],
@@ -126,7 +164,7 @@ export const config: AppConfig = {
   },
   
   filterMenu: {
-    type: 'tabs'
+    type: 'dropdown'
   },
   
   eddbServiceUrl: 'https://eddb.unifr.ch'
