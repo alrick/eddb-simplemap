@@ -5,7 +5,7 @@ import { Bug, X, Funnel, ArrowCounterClockwise, Crosshair, Image } from '@phosph
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
@@ -92,6 +92,7 @@ export function Map({ onPointCountChange }: MapProps) {
   const markerMapRef = useRef(new globalThis.Map<number, L.Marker>())
   const [showOpenById, setShowOpenById] = useState(false)
   const [inputId, setInputId] = useState('')
+  const [selectedFilter, setSelectedFilter] = useState<string>('')
 
   const standardFilterProperties = useMemo(() => 
     config.properties.filter(p => p.filter && p.filter.type === 'standard'), 
@@ -105,6 +106,12 @@ export function Map({ onPointCountChange }: MapProps) {
     config.properties.filter(p => p.filter === null || p.filter.type === 'standard'), 
     []
   )
+
+  useEffect(() => {
+    if (standardFilterProperties.length > 0 && !selectedFilter) {
+      setSelectedFilter(standardFilterProperties[0].field)
+    }
+  }, [standardFilterProperties, selectedFilter])
 
   useEffect(() => {
     if (!mapContainer.current || mapInstance.current) return
@@ -792,30 +799,48 @@ export function Map({ onPointCountChange }: MapProps) {
           )}
 
           {standardFilterProperties.length > 0 && (
-            <Tabs defaultValue={standardFilterProperties[0]?.field} className="w-full">
-              <div className={`px-4 pt-3 pb-2 sticky ${booleanFilterProperties.length > 0 ? 'top-[114px]' : 'top-[57px]'} bg-card z-10`}>
-                <TabsList className="grid w-full h-auto" style={{ gridTemplateColumns: `repeat(${standardFilterProperties.length}, 1fr)` }}>
-                  {standardFilterProperties.map(property => {
-                    const shortLabel = property.filter?.type === 'standard' ? property.filter.shortLabel : undefined
-                    return (
-                      <TabsTrigger 
-                        key={property.field} 
-                        value={property.field} 
-                        className="text-[10px] px-1 py-1.5"
-                      >
-                        {shortLabel || getPropertyLabel(property.field)}
-                      </TabsTrigger>
-                    )
-                  })}
-                </TabsList>
+            <div className="flex flex-col">
+              <div className="px-4 pt-3 pb-3 sticky top-[57px] bg-card z-10 border-b border-border">
+                <Label htmlFor="filter-select" className="text-xs text-muted-foreground mb-2 block">
+                  Select Filter
+                </Label>
+                <Select value={selectedFilter} onValueChange={setSelectedFilter}>
+                  <SelectTrigger id="filter-select" className="w-full">
+                    <SelectValue placeholder="Choose a filter..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {standardFilterProperties.map(property => {
+                      const state = filterStates[property.field]
+                      const activeCount = state ? state.selected.size : 0
+                      const totalCount = state ? state.values.length : 0
+                      const isPartiallyFiltered = state && activeCount < totalCount && activeCount > 0
+                      const isFullyFiltered = state && activeCount === 0
+                      
+                      return (
+                        <SelectItem key={property.field} value={property.field}>
+                          <div className="flex items-center justify-between w-full gap-4">
+                            <span>{getPropertyLabel(property.field)}</span>
+                            <span className={`text-xs font-medium ${
+                              isFullyFiltered ? 'text-destructive' : 
+                              isPartiallyFiltered ? 'text-primary' : 
+                              'text-muted-foreground'
+                            }`}>
+                              {activeCount}/{totalCount}
+                            </span>
+                          </div>
+                        </SelectItem>
+                      )
+                    })}
+                  </SelectContent>
+                </Select>
               </div>
               
               {standardFilterProperties.map(property => {
                 const state = filterStates[property.field]
-                if (!state) return null
+                if (!state || selectedFilter !== property.field) return null
                 
                 return (
-                  <TabsContent key={property.field} value={property.field} className="mt-0">
+                  <div key={property.field}>
                     <div className="px-4 py-2 border-b border-border bg-muted flex items-center justify-between">
                       <p className="text-xs text-muted-foreground">
                         Selected: <span className="font-semibold text-foreground">{state.selected.size}</span> of <span className="font-semibold text-foreground">{state.values.length}</span>
@@ -859,10 +884,10 @@ export function Map({ onPointCountChange }: MapProps) {
                         </div>
                       ))}
                     </div>
-                  </TabsContent>
+                  </div>
                 )
               })}
-            </Tabs>
+            </div>
           )}
         </div>
       )}
