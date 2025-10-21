@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
@@ -798,7 +799,7 @@ export function Map({ onPointCountChange }: MapProps) {
             </div>
           )}
 
-          {standardFilterProperties.length > 0 && (
+          {standardFilterProperties.length > 0 && config.filterMenu.type === 'dropdown' && (
             <div className="flex flex-col">
               <div className="px-4 pt-3 pb-3 sticky top-[57px] bg-card z-10 border-b border-border">
                 <Label htmlFor="filter-select" className="text-xs text-muted-foreground mb-2 block">
@@ -888,6 +889,97 @@ export function Map({ onPointCountChange }: MapProps) {
                 )
               })}
             </div>
+          )}
+
+          {standardFilterProperties.length > 0 && config.filterMenu.type === 'tabs' && (
+            <Tabs value={selectedFilter} onValueChange={setSelectedFilter} className="w-full">
+              <div className="px-4 pt-3 pb-3 sticky top-[57px] bg-card z-10 border-b border-border">
+                <TabsList className="w-full h-auto grid gap-1" style={{ gridTemplateColumns: `repeat(auto-fit, minmax(100px, 1fr))` }}>
+                  {standardFilterProperties.map(property => {
+                    const state = filterStates[property.field]
+                    const activeCount = state ? state.selected.size : 0
+                    const totalCount = state ? state.values.length : 0
+                    const isPartiallyFiltered = state && activeCount < totalCount && activeCount > 0
+                    const isFullyFiltered = state && activeCount === 0
+                    const label = property.filter?.type === 'standard' && property.filter.shortLabel 
+                      ? property.filter.shortLabel 
+                      : getPropertyLabel(property.field)
+                    
+                    return (
+                      <TabsTrigger 
+                        key={property.field} 
+                        value={property.field}
+                        className="text-xs px-2 py-1.5 relative"
+                      >
+                        <div className="flex flex-col items-center gap-0.5">
+                          <span className="truncate max-w-full">{label}</span>
+                          <span className={`text-[10px] font-bold ${
+                            isFullyFiltered ? 'text-destructive' : 
+                            isPartiallyFiltered ? 'text-primary' : 
+                            'text-muted-foreground'
+                          }`}>
+                            {activeCount}/{totalCount}
+                          </span>
+                        </div>
+                      </TabsTrigger>
+                    )
+                  })}
+                </TabsList>
+              </div>
+              
+              {standardFilterProperties.map(property => {
+                const state = filterStates[property.field]
+                if (!state) return null
+                
+                return (
+                  <TabsContent key={property.field} value={property.field} className="mt-0">
+                    <div className="px-4 py-2 border-b border-border bg-muted flex items-center justify-between">
+                      <p className="text-xs text-muted-foreground">
+                        Selected: <span className="font-semibold text-foreground">{state.selected.size}</span> of <span className="font-semibold text-foreground">{state.values.length}</span>
+                      </p>
+                      <div className="flex gap-1">
+                        <Button
+                          onClick={() => handleSelectAll(property.field)}
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 text-xs px-2"
+                        >
+                          All
+                        </Button>
+                        <Button
+                          onClick={() => handleDeselectAll(property.field)}
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 text-xs px-2"
+                        >
+                          None
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="px-4 py-3 space-y-3">
+                      {state.values.map(value => (
+                        <div key={value} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`${property.field}-${value}`}
+                            checked={state.selected.has(value)}
+                            onCheckedChange={() => handleFilterToggle(property.field, value)}
+                          />
+                          <Label
+                            htmlFor={`${property.field}-${value}`}
+                            className="text-sm font-normal cursor-pointer flex-1"
+                          >
+                            {value}
+                          </Label>
+                          <span className="text-xs text-muted-foreground font-medium">
+                            {state.counts[value] || 0}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </TabsContent>
+                )
+              })}
+            </Tabs>
           )}
         </div>
       )}

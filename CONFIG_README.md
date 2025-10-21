@@ -167,6 +167,64 @@ popup: {
 }
 ```
 
+## Configuration du Menu de Filtres
+
+Vous pouvez choisir entre deux types de menu pour les filtres :
+
+```typescript
+filterMenu: {
+  type: 'dropdown' | 'tabs'
+}
+```
+
+### Types de menu
+
+#### 1. Menu Dropdown (par défaut)
+
+Utilise un menu déroulant pour sélectionner le filtre à afficher. Recommandé quand il y a beaucoup de filtres.
+
+```typescript
+filterMenu: {
+  type: 'dropdown'
+}
+```
+
+**Avantages :**
+- Compact, prend moins d'espace
+- Bon pour de nombreux filtres (5+)
+- Interface plus propre
+
+#### 2. Menu Tabs (onglets)
+
+Affiche tous les filtres sous forme d'onglets visibles. Recommandé pour un accès rapide à un nombre modéré de filtres.
+
+```typescript
+filterMenu: {
+  type: 'tabs'
+}
+```
+
+**Avantages :**
+- Accès direct à tous les filtres
+- Visualisation immédiate des états de filtrage
+- Utilise les `shortLabel` pour des onglets compacts
+- Bon pour 2-5 filtres
+
+### Label courts (shortLabel)
+
+Les labels courts sont particulièrement utiles avec le menu tabs :
+
+```typescript
+{
+  field: 'TypologySurroundingEnvironment',
+  label: 'Typology / Surrounding Environment',
+  filter: {
+    type: 'standard',
+    shortLabel: 'Surrounding Env.'  // Label compact pour l'onglet
+  }
+}
+```
+
 ## Configuration complète
 
 Voir le fichier `src/config.ts` pour la configuration complète de l'application incluant :
@@ -178,4 +236,5 @@ Voir le fichier `src/config.ts` pour la configuration complète de l'application
 - Propriétés (affichage, labels et filtres)
 - Configuration de la carte
 - Configuration du popup
+- Configuration du menu de filtres
 - URL du service EDDB

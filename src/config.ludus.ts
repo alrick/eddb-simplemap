@@ -16,6 +16,8 @@ export interface PropertyConfig {
   filter: FilterType
 }
 
+export type FilterMenuType = 'dropdown' | 'tabs'
+
 export interface AppConfig {
   appName: string
   apiUrl: string
@@ -34,6 +36,9 @@ export interface AppConfig {
   popup: {
     titleField: string
     width?: number
+  }
+  filterMenu: {
+    type: FilterMenuType
   }
   eddbServiceUrl: string
 }
@@ -112,6 +117,10 @@ export const config: AppConfig = {
   popup: {
     titleField: 'Title',
     width: 300
+  },
+  
+  filterMenu: {
+    type: 'dropdown'
   },
   
   eddbServiceUrl: 'https://eddb.unifr.ch'
