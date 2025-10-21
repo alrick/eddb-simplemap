@@ -46,112 +46,60 @@ export interface AppConfig {
 }
 
 export const config: AppConfig = {
-  appName: 'HolyNet',
+  appName: 'Ludus',
   
-  apiUrl: 'https://eddb.unifr.ch/noco/api/v2/tables/mnn6jpi8328qbc6/records',
-  apiToken: 'Q1cPWj4uxDBSrDqlU86Gyto77Cku7nGkvwmdbT6W',
+  apiUrl: 'https://eddb.unifr.ch/noco/api/v2/tables/mw4mvjms6nkuq0f/records',
+  apiToken: 'hCmfVFzK4mpjHkyLJzD1U2plqzJInYmdhzQ8NrzR',
   
-  geoDataField: 'Coordinates',
+  geoDataField: 'GeoData',
   
   properties: [
     {
-      field: 'TownVillage',
-      label: 'Town / Village',
-      filter: null
-    },
-    {
-      field: 'HistoricalDenomination',
-      label: 'Historical Denomination',
-      filter: null
-    },
-    {
-      field: 'Coordinates',
-      label: 'Coordinates',
-      filter: null
-    },
-    {
-      field: 'Circuits',
-      label: 'Associated Circuits',
-      path: '_nc_m2m_Sites_Circuits.Circuits.Denomination',
+      field: 'Material',
       filter: {
         type: 'standard'
       }
     },
     {
-      field: 'TimeOfEmergence',
-      label: 'Time of Emergence',
+      field: 'Morphology',
       filter: {
         type: 'standard',
-        shortLabel: 'ToE'
+        shortLabel: 'Morph.'
       }
     },
     {
-      field: 'TypologyLegendaryPhysiognomy',
-      label: 'Typology - Legendary Physiognomy',
+      field: 'Game',
       filter: {
-        type: 'standard',
-        shortLabel: 'Leg. Physiognomy'
+        type: 'standard'
       }
     },
     {
-      field: 'TypologyConnectivity',
-      label: 'Typology - Connectivity',
+      field: 'ConservationState',
+      label: 'Conservation State',
       filter: {
         type: 'standard',
-        shortLabel: 'Connectivity'
+        shortLabel: 'State'
       }
     },
     {
-      field: 'TypologySurroundingEnvironment',
-      label: 'Typology - Surrounding Environment',
+      field: 'Typology',
       filter: {
         type: 'standard',
-        shortLabel: 'Surrounding Env.'
+        shortLabel: 'Type'
       }
     },
     {
-      field: 'CultObjectMateriality',
-      label: 'Cult Object - Materiality',
-      filter: {
-        type: 'standard',
-        shortLabel: 'CO Materiality'
-      }
-    },
-    {
-      field: 'CultObjectCulticIdentity',
-      label: 'Cult Object - Cultic Identity',
+      field: 'PleiadesId',
+      label: 'Pleiades ID',
       filter: null
     },
     {
-      field: 'AssociatedMemorialNetworks',
-      label: 'Associated Memorial Networks',
-      filter: {
-        type: 'standard',
-        shortLabel: 'Memorial Networks'
-      }
-    },
-    {
-      field: 'AssociatedReligiousGroups',
-      label: 'Associated Religious Groups',
-      filter: null
-    },
-    {
-      field: 'ExperientialDimension',
-      label: 'Experiential Dimension',
-      filter: null
-    },
-    {
-      field: 'History',
-      label: 'History',
-      filter: null
-    },
-    {
-      field: 'Visuals',
+      field: 'Image',
       label: 'Has Images',
       filter: {
         type: 'boolean',
         checkFunction: (record: any) => {
-          const imageField = 'Visuals'
+          const imageField = 'Image'
           return record[imageField] && Array.isArray(record[imageField]) && record[imageField].length > 0 && record[imageField].some((img: any) => img.signedPath)
         }
       }
@@ -170,13 +118,13 @@ export const config: AppConfig = {
   },
   
   popup: {
-    titleField: 'Denomination',
-    width: 500,
-    imageField: 'Visuals'
+    titleField: 'Title',
+    width: 350,
+    imageField: 'Image'
   },
   
   filterMenu: {
-    type: 'dropdown'
+    type: 'tabs'
   },
   
   eddbServiceUrl: 'https://eddb.unifr.ch'
