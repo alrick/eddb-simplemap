@@ -14,6 +14,7 @@ export interface PropertyConfig {
   field: string
   label?: string
   filter: FilterType
+  path?: string
 }
 
 export type FilterMenuType = 'dropdown' | 'tabs'

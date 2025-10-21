@@ -13,6 +13,7 @@ import { Switch } from '@/components/ui/switch'
 import { marked } from 'marked'
 import { toast } from 'sonner'
 import { config, type PropertyConfig } from '@/config'
+import { getValueFromPath } from '@/lib/utils'
 
 interface ImageData {
   signedPath?: string
@@ -74,6 +75,24 @@ function parseMarkdown(text: string): string {
   } catch {
     return text
   }
+}
+
+function getPropertyValue(record: any, property: PropertyConfig): string[] {
+  if (property.path) {
+    const values = getValueFromPath(record, property.path)
+    return values.filter(v => v !== null && v !== undefined && v !== '').map(v => String(v))
+  }
+  
+  const value = record[property.field]
+  if (value === null || value === undefined || value === '') {
+    return []
+  }
+  
+  if (Array.isArray(value)) {
+    return value.filter(v => v !== null && v !== undefined && v !== '').map(v => String(v))
+  }
+  
+  return [String(value)]
 }
 
 export function Map({ onPointCountChange }: MapProps) {
@@ -177,10 +196,15 @@ export function Map({ onPointCountChange }: MapProps) {
                 const lng = parseFloat(parts[1])
                 
                 if (!isNaN(lat) && !isNaN(lng)) {
-                  const value = typeof record[property.field] === 'string' && record[property.field].trim() !== '' 
-                    ? record[property.field] 
-                    : 'Unknown'
-                  countMap[value] = (countMap[value] || 0) + 1
+                  const values = getPropertyValue(record, property)
+                  
+                  if (values.length === 0) {
+                    countMap['Unknown'] = (countMap['Unknown'] || 0) + 1
+                  } else {
+                    values.forEach(value => {
+                      countMap[value] = (countMap[value] || 0) + 1
+                    })
+                  }
                 }
               }
             }
@@ -281,15 +305,15 @@ export function Map({ onPointCountChange }: MapProps) {
                 
                 const popupContent = displayProperties
                   .map(property => {
-                    const value = record[property.field]
-                    if (value !== null && value !== undefined && value !== '') {
+                    const values = getPropertyValue(record, property)
+                    if (values.length > 0) {
                       const label = getPropertyLabel(property.field)
                       if (property.field === 'PleiadesId') {
-                        const pleiadesUrl = `https://pleiades.stoa.org/places/${value}`
-                        return `<p><strong>${label}:</strong> <a href="${pleiadesUrl}" target="_blank" rel="noopener noreferrer" style="color: oklch(0.45 0.15 250); text-decoration: underline;">${value}</a></p>`
+                        const pleiadesUrl = `https://pleiades.stoa.org/places/${values[0]}`
+                        return `<p><strong>${label}:</strong> <a href="${pleiadesUrl}" target="_blank" rel="noopener noreferrer" style="color: oklch(0.45 0.15 250); text-decoration: underline;">${values[0]}</a></p>`
                       }
-                      const parsedValue = parseMarkdown(String(value))
-                      return `<p><strong>${label}:</strong> ${parsedValue}</p>`
+                      const displayValue = values.map(v => parseMarkdown(String(v))).join(', ')
+                      return `<p><strong>${label}:</strong> ${displayValue}</p>`
                     }
                     return ''
                   })
@@ -428,12 +452,23 @@ export function Map({ onPointCountChange }: MapProps) {
     let validPoints = 0
     apiData.forEach(record => {
       for (const property of standardFilterProperties) {
-        const recordValue = typeof record[property.field] === 'string' && record[property.field].trim() !== '' 
-          ? record[property.field] 
-          : 'Unknown'
+        const values = getPropertyValue(record, property)
         
-        if (!filterStates[property.field]?.selected.has(recordValue)) {
-          return
+        if (values.length === 0) {
+          if (!filterStates[property.field]?.selected.has('Unknown')) {
+            return
+          }
+        } else {
+          let hasMatch = false
+          for (const value of values) {
+            if (filterStates[property.field]?.selected.has(value)) {
+              hasMatch = true
+              break
+            }
+          }
+          if (!hasMatch) {
+            return
+          }
         }
       }
       
@@ -467,15 +502,15 @@ export function Map({ onPointCountChange }: MapProps) {
             
             const popupContent = displayProperties
               .map(property => {
-                const value = record[property.field]
-                if (value !== null && value !== undefined && value !== '') {
+                const values = getPropertyValue(record, property)
+                if (values.length > 0) {
                   const label = getPropertyLabel(property.field)
                   if (property.field === 'PleiadesId') {
-                    const pleiadesUrl = `https://pleiades.stoa.org/places/${value}`
-                    return `<p><strong>${label}:</strong> <a href="${pleiadesUrl}" target="_blank" rel="noopener noreferrer" style="color: oklch(0.45 0.15 250); text-decoration: underline;">${value}</a></p>`
+                    const pleiadesUrl = `https://pleiades.stoa.org/places/${values[0]}`
+                    return `<p><strong>${label}:</strong> <a href="${pleiadesUrl}" target="_blank" rel="noopener noreferrer" style="color: oklch(0.45 0.15 250); text-decoration: underline;">${values[0]}</a></p>`
                   }
-                  const parsedValue = parseMarkdown(String(value))
-                  return `<p><strong>${label}:</strong> ${parsedValue}</p>`
+                  const displayValue = values.map(v => parseMarkdown(String(v))).join(', ')
+                  return `<p><strong>${label}:</strong> ${displayValue}</p>`
                 }
                 return ''
               })
