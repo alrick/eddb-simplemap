@@ -70,6 +70,14 @@ export const config: AppConfig = {
       filter: null
     },
     {
+      field: 'Circuits',
+      label: 'Associated Circuits',
+      path: '_nc_m2m_Sites_Circuits.Circuits.Denomination',
+      filter: {
+        type: 'standard'
+      }
+    },
+    {
       field: 'TimeOfEmergence',
       label: 'Time of Emergence',
       filter: {
